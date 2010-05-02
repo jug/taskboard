@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2009 Cognifide
- * 
+ *
  * This file is part of Taskboard.
- * 
+ *
  * Taskboard is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Taskboard is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -60,11 +60,11 @@
         background-color: #74AFCF;
         cursor: text;
     }
-        
+
     h1 span.title form {
         display: inline;
     }
-    
+
         h1 span.title form input {
             border:1px solid #CCCCCC;
             font-family:Trebuchet,Tahoma,Arial,sans-serif;
@@ -75,7 +75,7 @@
 #actions {
     font-size: 0.8em;
     padding: 0 10px;
-    float: right; 
+    float: right;
 }
 
     #actions li {
@@ -86,7 +86,7 @@
     #actions li.current {
         border: 2px solid #457F9F;
         border-bottom-color: #74AFCF;
-        background-color: #74AFCF; 
+        background-color: #74AFCF;
         padding: 5px;
         -moz-border-radius: 5px 5px 0 0;
         -webkit-border-top-left-radius: 5px 5px;
@@ -117,7 +117,7 @@
         -webkit-border-bottom-left-radius: 5px 5px;
         -webkit-border-bottom-right-radius: 5px 5px;
     }
-    
+
     #formActions fieldset span {
         color: #FFFFFF;
     }
@@ -125,26 +125,26 @@
     #formActions fieldset#fieldsetAddColumn {
         width: 450px;
     }
-    
+
         #formActions fieldset a.actionHideForm {
             position: absolute;
             top: 0;
             right: 10px;
         }
-    
+
         #formActions fieldset label {
             color: #FFFFFF;
             font-size: 0.8em;
             display:block;
-            margin-bottom: 3px; 
+            margin-bottom: 3px;
         }
-    
+
         #formActions fieldset input[type=text] {
             width: 540px;
             border: 1px solid #CCCCCC;
             padding: 2px;
         }
-    
+
         #formActions fieldset#fieldsetAddColumn input[type=text] {
             width: 390px;
         }
@@ -252,7 +252,7 @@
                     #taskboard .column ol.cards li ul.actions li a {
                         display: block;
                     }
-                
+
                 #taskboard .column ol.cards li span.alias {
                     display:block;
                     margin-bottom: 5px;
@@ -274,7 +274,7 @@
                         -webkit-border-radius: 5px;
                     }
 
-                
+
                 #taskboard .column ol.cards li span.progress {
                     display:block;
                     font-size: 0.8em;
@@ -456,22 +456,22 @@
     }
 
     .actions li .deleteColumn,
-	.actions li .deleteRow{
+    .actions li .deleteRow{
         background-image: url(/images/cross_off.png);
     }
 
     .actions li .deleteColumn:hover,
-	.actions li .deleteRow:hover {
+    .actions li .deleteRow:hover {
         background-image: url(/images/cross_on.png);
     }
 
     .actions li .cleanColumn,
-	.actions li .cleanRow {
+    .actions li .cleanRow {
         background-image: url(/images/remove_cards_off.png);
     }
 
     .actions li .cleanColumn:hover,
-	.actions li .cleanRow:hover {
+    .actions li .cleanRow:hover {
         background-image: url(/images/remove_cards_on.png);
     }
 
@@ -700,11 +700,11 @@
 }
 
 #colorPicker .checkwht {
-    cursor:default;    
+    cursor:default;
     background-position:-16px 0;
 }
 #colorPicker .checkblk {
-    cursor:default;    
+    cursor:default;
     background-position:-32px 0;
 }
 

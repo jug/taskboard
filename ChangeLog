@@ -1,4 +1,11 @@
 
+2010-05-02  jug  <taskboard@jens-gaspar.de>
+
+    * public/javascripts/footer.js, public/javascripts/home.js,
+      public/javascripts/taskboard.js, public/javascripts/utils.js,
+      public/stylesheets/taskboard.css:
+    - replaced TAB with 4-spaces
+
 2010-05-01  jug  <taskboard@jens-gaspar.de>
 
     * ChangeLog:
