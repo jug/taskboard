@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 
+require 'digest/sha1'
+
 class User < ActiveRecord::Base
   validates_presence_of :username
   validates_uniqueness_of :username
