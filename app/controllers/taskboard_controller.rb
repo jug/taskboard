@@ -1,23 +1,23 @@
 # Copyright (C) 2009 Cognifide
-# 
+#
 # This file is part of Taskboard.
-# 
+#
 # Taskboard is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Taskboard is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 
 class TaskboardController < JuggernautSyncController
   include ApplicationHelper
-  
+
   before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown"]
 
   def index
@@ -76,7 +76,7 @@ class TaskboardController < JuggernautSyncController
     column = insert_column params[:taskboard_id].to_i, params[:name]
     render :json => sync_add_column(column)
   end
-  
+
   def reorder_columns
     column = Column.find(params[:id].to_i)
     before = column.position
@@ -93,9 +93,9 @@ class TaskboardController < JuggernautSyncController
       render :json => sync_rename_column(column, { :before => before })
     else
       send_error 'Column name cannot be empty!'
-    end  
+    end
   end
-  
+
   def remove_column
     # first remove from list, than delete from db
     # to keep the rest of the list consistent
@@ -113,7 +113,7 @@ class TaskboardController < JuggernautSyncController
     }
     render :json => sync_clean_column(column)
   end
-  
+
   def add_row
     row = insert_row params[:taskboard_id].to_i
     render :json => sync_add_row(row)
@@ -137,12 +137,75 @@ class TaskboardController < JuggernautSyncController
     render :json => sync_clean_row(row)
   end
 
+  def reorder_rows
+    row = Row.find(params[:id].to_i)
+    new_pos = params[:position].to_i;
+    before = row.position
+
+    max_row = Row.first( :select => "MAX(position) AS position",
+                         :conditions => { :taskboard_id => row.taskboard_id } )
+    max_pos = max_row.position
+    if new_pos < 1
+      new_pos = 1
+    elsif new_pos > max_pos
+      new_pos = max_pos
+    end
+
+    if row.position != new_pos
+      row.insert_at(new_pos)
+    end
+    render :json => sync_move_row(row, { :before => before })
+  end
+
+  def copy_row
+    src_row = Row.find(params[:src_id].to_i)
+    trg_row = Row.find(params[:trg_id].to_i)
+
+    # mapping for column-positions
+    cmap = [] # src-col-pos => trg-col-id
+    max_colpos = 0
+    trg_cols = Column.all( :conditions => { :taskboard_id => trg_row.taskboard_id },
+                            :order => "position" )
+    trg_cols.each { |col|
+      cmap[col.position] = col.id
+      if col.position > max_colpos
+        max_colpos = col.position
+      end
+    }
+    src_cols = Column.all( :conditions => { :taskboard_id => src_row.taskboard_id },
+                            :order => "position" )
+    src_cols.each { |col|
+      if col.position > max_colpos
+        cmap[col.position] = cmap[max_colpos]
+      end
+    }
+
+    # copy cards from src-row to target-row
+    updated_cards = []
+    src_row.cards.each { |card|
+      old_hours_left = card.hours_left
+      new_card = card.clone( trg_row.taskboard_id, cmap[card.column_id], trg_row.id )
+      new_card.save!
+      new_card.move_to_bottom
+      if old_hours_left > 0
+         new_card.update_hours old_hours_left
+      end
+      updated_cards << new_card
+    }
+
+    if updated_cards.empty?
+      render :text => "{ status : 'success' }"
+    else
+      render :json => sync_copy_row(trg_row, updated_cards)
+    end
+  end
+
   def add_card
     name = params[:name]
     taskboard_id = params[:taskboard_id].to_i
     column_id = params[:column_id]
     row_id = params[:row_id]
-    
+
     if column_id.nil? or column_id == ''
       new_column = insert_column taskboard_id
       column_id = new_column.id
@@ -156,12 +219,12 @@ class TaskboardController < JuggernautSyncController
     else
       row_id = row_id.to_i
     end
-    
+
     cards = []
-    
+
     begin
       if JiraParser.is_jira_url(name)
-        cards = JiraParser.fetch_cards(name) 
+        cards = JiraParser.fetch_cards(name)
       elsif UrlParser.is_url(name)
         cards = UrlParser.fetch_cards(name)
       else
@@ -189,6 +252,30 @@ class TaskboardController < JuggernautSyncController
         render :json => sync_add_cards(updated_cards)
       end
     end
+  end
+
+  def copy_card
+    src_card = Card.find(params[:id].to_i)
+    is_copy = params[:copy].to_i
+
+    if is_copy == 1
+      old_hours_left = src_card.hours_left
+      card = src_card.clone
+      card.save!
+      card.insert_at( src_card.position + 1 )
+      if old_hours_left > 0
+         card.update_hours old_hours_left
+      end
+    else
+      card = Card.new(:taskboard_id => src_card.taskboard_id,
+                      :column_id => src_card.column_id, :row_id => src_card.row_id,
+                      :name => "TODO",
+                      :color => src_card.color)
+      card.save!
+      card.move_to_bottom
+    end
+
+    render :json => sync_copy_card(card, is_copy)
   end
 
   def reorder_cards

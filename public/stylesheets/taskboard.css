@@ -168,6 +168,14 @@
             padding: 5px;
         }
 
+#taskboard div.row span {
+   font-size: 80%;
+   display: block;
+}
+#taskboard span.RowSum {
+   color: darkred;
+}
+
         #taskboard #metaLane .row {
             border-color: #FFFFFF;
         }
@@ -210,6 +218,12 @@
             background-color: #FFFFD3;
             cursor: text;
         }
+
+#taskboard .column h2 span.ColSum {
+   font-size: 70%;
+   color: darkred;
+   padding: 0px 1em 0px;
+}
 
             #taskboard .column ol.cards > li {
                 min-height: 10px;
@@ -475,12 +489,22 @@
         background-image: url(/images/remove_cards_on.png);
     }
 
+    .actions li .copyCard:hover,
+    .actions li .copyCard {
+        background-image: url(/images/plus-small.gif);
+    }
+
     .big.actions li .changeColor {
         background-image: url(/images/color_big_off.png);
     }
 
     .big.actions li .changeColor:hover {
         background-image: url(/images/color_big_on.png);
+    }
+
+    .big.actions li .copyCard:hover,
+    .big.actions li .copyCard {
+        background-image: url(/images/plus-small.gif);
     }
 
 /* Form drop animation hack */
@@ -522,7 +546,7 @@
 
 .bigCard {
     position: absolute;
-    top: 50px;
+    top: 150px;
     left: 50%;
     margin-left: -400px;
     padding: 20px 40px 20px 20px;
@@ -707,6 +731,26 @@
     cursor:default;
     background-position:-32px 0;
 }
+
+/* row-actions */
+
+#rowActionsDialog {
+    position: absolute;
+    background-color: #94CFEF;
+    border: 1px solid black;
+    margin: 5px;
+    padding-left: 25px;
+    z-index: 2000;
+}
+
+#rowActionsDialog ul {
+    list-style: disc;
+}
+
+#rowActionsDialog li {
+    padding: 4px;
+}
+
 
 #filterTags {
     overflow: hidden;

@@ -1,25 +1,25 @@
 # Copyright (C) 2009 Cognifide
-# 
+#
 # This file is part of Taskboard.
-# 
+#
 # Taskboard is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Taskboard is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 
 class JuggernautSyncController < ApplicationController
   include ActionView::Helpers::TextHelper # to pluralize cards added
-  
+
   # Taskboard actions
-  
+
   def sync_rename_taskboard taskboard, params = {}
     options = { :message => "Taskboard renamed to '#{taskboard.name}'",
                 :object_id => taskboard.id,
@@ -27,14 +27,14 @@ class JuggernautSyncController < ApplicationController
                 :before => "", # should come in params
                 :after => taskboard.name }
     options.update params
-       
+
     report taskboard.id, 'renameTaskboard', options[:message], options
-   
+
     send_via_juggernaut taskboard.id, 'renameTaskboard', taskboard.name.to_json, options[:message]
   end
 
   # Column actions
-  
+
   def sync_column_action column, action, params = {}
     options = { :message => "Action '#{action}' called on a '#{column.name}' column",
                 :object_id => column.id,
@@ -43,10 +43,10 @@ class JuggernautSyncController < ApplicationController
                 :after => "" }
     options.update params
 
-    report column.taskboard_id, action, options[:message], options    
+    report column.taskboard_id, action, options[:message], options
     send_via_juggernaut column.taskboard_id, action, column.to_json, options[:message]
   end
-  
+
   def sync_add_column column, params = {}
     options = { :message => "Added a '#{column.name}' column" }.update params
 
@@ -65,7 +65,7 @@ class JuggernautSyncController < ApplicationController
     options = { :message => "Moved a '#{column.name}' column",
                 :before => "", # should come in params
                 :after => column.position }.update params
-    
+
     sync_column_action column, 'moveColumn', options
   end
 
@@ -81,7 +81,7 @@ class JuggernautSyncController < ApplicationController
 
   # Row actions
   def sync_row_action row, action, params = {}
-    options = { :message => "Action '#{action}' called on a '#{row.name}' row",
+    options = { :message => "Action '#{action}' called on a '#{row.id}'/'#{row.name}' row",
                 :object_id => row.id,
                 :object_name => row.name,
                 :before => "", # should come in params
@@ -104,11 +104,23 @@ class JuggernautSyncController < ApplicationController
 
   def sync_clean_row row, params = {}
     options = { :message => "Cleaned a '#{row.name}' row" }.update params
-    sync_column_action row, 'cleanRow', options
+    sync_row_action row, 'cleanRow', options
+  end
+
+  def sync_move_row row, params = {}
+    options = { :message => "Moved row ##{row.id}",
+                :before => "", # should come in params
+                :after => row.position }.update params
+    sync_row_action row, 'moveRow', options
+  end
+
+  def sync_copy_row row, cards, params = {}
+    options = { :message => "Copied #{pluralize cards.length, 'card'} for row ##{row.id}" }.update params
+    sync_row_action row, 'copyRow', options
   end
 
   # Card actions
-  
+
   def sync_card_action card, action, params = {}
     if card.is_a? Array
       taskboard_id = card.first.taskboard_id
@@ -119,7 +131,7 @@ class JuggernautSyncController < ApplicationController
       object_id    = card.id
       object_name  = card.name
     end
-        
+
     options = { :message => "Action '#{action}' called",
                 :object_id => object_id,
                 :object_name => object_name,
@@ -127,13 +139,13 @@ class JuggernautSyncController < ApplicationController
                 :after => "" }
     options.update params
 
-    report taskboard_id, action, options[:message], options    
+    report taskboard_id, action, options[:message], options
     send_via_juggernaut taskboard_id, action, card.to_json, options[:message]
   end
-  
+
   def sync_add_cards cards, params = {}
     options = { :message => "#{pluralize cards.length, 'card'} added" }.update params
-    
+
     sync_card_action cards, 'addCards', options
   end
 
@@ -141,7 +153,7 @@ class JuggernautSyncController < ApplicationController
     options = { :message => "Moved a '#{card.name}' card",
                 :before => "",
                 :after => "#{card.position} @ #{card.column.name}"  }.update params
-    
+
     sync_card_action card, 'moveCard', options
   end
 
@@ -149,7 +161,7 @@ class JuggernautSyncController < ApplicationController
     options = { :message => "Updated hours for a '#{card.name}' card",
                 :before => "",
                 :after => card.hours_left }.update params
-    
+
     sync_card_action card, 'updateCardHours', options
   end
 
@@ -157,22 +169,34 @@ class JuggernautSyncController < ApplicationController
     options = { :message => "Changed color of a '#{card.name}' card",
                 :before => "",
                 :after => card.color }.update params
-    
-    sync_card_action card, 'changeCardColor', options   
+
+    sync_card_action card, 'changeCardColor', options
   end
 
   def sync_delete_card card, params = {}
     options = { :message => "Deleted a '#{card.name}' card", :before => "" }.update params
-    
+
     sync_card_action card, 'deleteCard', options
   end
 
   def sync_update_card card, params = {}
     options = { :message => "Card '#{card.name}' updated", :before => "" }.update params
-    
-    sync_card_action card, 'updateCard', options    
+
+    sync_card_action card, 'updateCard', options
   end
-  
+
+  def sync_copy_card card, is_copy, params = {}
+    if is_copy == 1
+      copyMsg = "full"
+    else
+      copyMsg = "empty"
+    end
+    options = { :message => "copied (" + copyMsg + ") card '#{card.name}'",
+                :after => "#{card.position} @ #{card.column.name}" }.update params
+
+    sync_card_action card, 'copyCard', options
+  end
+
   private
 
   def generate_js_call function, parameter
@@ -187,30 +211,30 @@ class JuggernautSyncController < ApplicationController
 
   def report taskboard_id, action, message, params = {}
     insert_labels = true
-    
+
     options = { :object_id => "", :object_name => "", :before => "", :after => "" }
     options.update params
-    
+
     data = []
     data << "TIMESTAMP" if insert_labels
     data << Time.now.strftime("%Y%m%d%H%M%S")
     data << "USER_ID" if insert_labels
     data << session[:user_id]
-    data << "USER_NAME" if insert_labels    
+    data << "USER_NAME" if insert_labels
     data << (session[:user].nil? ? "" : session[:user].username)
     data << "ACTION" if insert_labels
     data << action
     data << "MSG" if insert_labels
     data << message
-    data << "OBJECT_ID" if insert_labels    
+    data << "OBJECT_ID" if insert_labels
     data << options[:object_id]
-    data << "OBJECT_NAME" if insert_labels    
+    data << "OBJECT_NAME" if insert_labels
     data << options[:object_name]
-    data << "BEFORE" if insert_labels    
+    data << "BEFORE" if insert_labels
     data << options[:before]
-    data << "AFTER" if insert_labels    
+    data << "AFTER" if insert_labels
     data << options[:after]
-    
+
     report_logger(taskboard_id).info data.join("; ")
   end
 

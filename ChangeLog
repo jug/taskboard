@@ -1,6 +1,34 @@
 
 2010-05-02  jug  <taskboard@jens-gaspar.de>
 
+    * public/javascripts/taskboard.js (TASKBOARD.builder.actions.copyCardAction, ~.rowActions;
+        TASKBOARD.builder.buildColumnFromJSON; TASKBOARD.builder.buildRowMeta;
+        TASKBOARD.builder.buildMetaLane; TASKBOARD.builder.buildCardFromJSON;
+        TASKBOARD.api.moveRow, ~.copyRow, ~.copyCard; TASKBOARD.loadFromJSON;
+        TASKBOARD.openCard; TASKBOARD.openColorPicker; TASKBOARD.openRowActions;
+        TASKBOARD.remote.copyCard, ~.moveRow, ~.copyRow),
+      app/controllers/juggernaut_sync_controller.rb (JuggernautSyncController.sync_row_action,
+        ~.sync_move_row, ~.sync_copy_row, ~.sync_copy_card),
+      app/controllers/taskboard_controller.rb (TaskboardController.reorder_rows, ~.copy_row,
+        ~.copy_card),
+      public/stylesheets/taskboard.css,
+      public/images/plus-small.gif:
+    - taskboard-card:
+      - added '+'-icon to add-card / copy card
+      - changed order of action-icons to: change-color, add/copy-card, delete-card
+      - removed card-burndown by commenting out
+      - added light-grey color in card-color-picker
+      - moved opening-big-card down from top 50px -> 150px
+    - taskboard-column: show hours-sum of cards per column in title as "(S23)"
+    - taskboard-row:
+      - show hours-sum and cumulated hours-sum of cards per row "(S23)" and "(C47)"
+      - added "(row-position:row-id)" opening actions-dialog to
+        - move row to specified new position
+        - copy all cards from other row specified by row-id into current row
+    - fix bug in JuggernautSyncController:
+      - call sync_row_action() in sync_clean_row() instead of calling sync_column_action()
+      - added logging of row-id on syncing row-action
+
     * app/models/user.rb:
     - fixed include of 'digest/sha1' on some systems
 

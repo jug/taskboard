@@ -219,9 +219,17 @@ TASKBOARD.builder.actions = {
         return $.tag("a", "Delete row", { className : 'deleteRow', title : 'Delete row', href : '#' });
     },
 
-
     cleanRow : function(){
         return $.tag("a", "Delete all cards from column", { className : 'cleanRow', title : 'Delete all cards from row', href : '#' });
+    },
+
+    copyCardAction : function(){
+        return $.tag("a", "+", { className : "copyCard", title : "Copy card", href : "#" });
+    },
+
+    rowActions : function(row){
+        var infoRow = $.tag('span', "(" + row.position + ":" + row.id + ")", { className : "RowInfo" });
+        return $.tag("a", infoRow, { className : 'rowActions', title : "position:row_id", href : '#' });
     }
 };
 
@@ -229,7 +237,10 @@ TASKBOARD.builder.actions = {
  * Builds a column element from JSON data.
  */
 TASKBOARD.builder.buildColumnFromJSON = function(column){
-    var header = $.tag("h2", column.name.escapeHTML());
+    var colHours = (column.sumHours > 0)
+        ? $.tag("span", "(S" + column.sumHours + ")", { className: "ColSum", title: "hours of column" })
+        : '';
+    var header = $.tag("h2", column.name.escapeHTML() + colHours);
     var columnLi = "";
     // edit-mode-only
     if(TASKBOARD.editor){
@@ -237,6 +248,7 @@ TASKBOARD.builder.buildColumnFromJSON = function(column){
         actionsColumn += $.tag("li", TASKBOARD.builder.actions.cleanColumn());
         columnLi = $.tag("ul", actionsColumn, { className : 'actions' });
     }
+
     columnLi += header;
     columnLi = $.tag("li", columnLi, { id : 'column_' + column.id, className :'lane column' });
     columnLi = $(columnLi)
@@ -309,6 +321,16 @@ TASKBOARD.builder.buildRowMeta = function(row){
         var actionsRow = $.tag("li", TASKBOARD.builder.actions.deleteRow());
         actionsRow += $.tag("li", TASKBOARD.builder.actions.cleanRow());
         rowDiv.append($.tag("ul", actionsRow, { className : 'actions' }));
+
+        var infoRow = TASKBOARD.builder.actions.rowActions(row);
+        if(row.sumHours){
+            infoRow += $.tag('span', "S" + row.sumHours, { className : "RowSum", title : "hours of row" });
+        }
+        if(row.sumHoursAll){
+            infoRow += $.tag('span', "C" + row.sumHoursAll, { className : "RowSum", title : "cumulated hours of rows" });
+        }
+        rowDiv.append(infoRow);
+
         rowDiv.find(".deleteRow")
             .bind("click", function(ev){
                 ev.preventDefault();
@@ -322,6 +344,7 @@ TASKBOARD.builder.buildRowMeta = function(row){
                     $(".row_" + row.id).fadeOut(1000, function(){ $(this).remove(); } );
                 }
             });
+
         rowDiv.find(".cleanRow")
             .bind("click", function(ev){
                 ev.preventDefault();
@@ -333,13 +356,24 @@ TASKBOARD.builder.buildRowMeta = function(row){
                     cards.fadeOut(375, function(){ $(this).remove(); } );
                 }
             });
+
+        rowDiv.find(".rowActions")
+            .bind("click", function(ev){
+                TASKBOARD.openRowActions(row, $(this).offset().top - 5, $(this).offset().left + 30);
+                ev.preventDefault();
+                ev.stopPropagation();
+            });
     }
     return rowDiv;
 };
 
-TASKBOARD.builder.buildMetaLane = function(){
+TASKBOARD.builder.buildMetaLane = function(sumHoursMap){
     var metaLane = $($.tag("li", { id: "metaLane", className: "lane"}));
+    var sumHoursAll = 0;
     $.each(TASKBOARD.data.rows.sortByPosition(), function(i, row){
+        row.sumHours = (typeof sumHoursMap[row.id] === 'undefined') ? 0 : sumHoursMap[row.id];
+        sumHoursAll = sumHoursAll + row.sumHours;
+        row.sumHoursAll = sumHoursAll;
         var rowDiv = TASKBOARD.builder.buildRowMeta(row);
         metaLane.append(rowDiv);
     });
@@ -371,8 +405,9 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
 
     // edit-mode-only
     if(TASKBOARD.editor){
-        actionsUl += $.tag("li", TASKBOARD.builder.actions.deleteCardAction());
         actionsUl += $.tag("li", TASKBOARD.builder.actions.changeColorAction());
+        actionsUl += $.tag("li", TASKBOARD.builder.actions.copyCardAction());
+        actionsUl += $.tag("li", TASKBOARD.builder.actions.deleteCardAction());
 
         actionsUl = $.tag("ul", actionsUl, { className : 'actions' });
         cardLi += actionsUl;
@@ -426,6 +461,14 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
         cardLi.find(".changeColor").click(function(ev){
                 var card = $(this).closest(".cards > li");
                 TASKBOARD.openColorPicker(card, $(this).offset().top - 8, $(this).offset().left + 12);
+                ev.preventDefault();
+                ev.stopPropagation();
+            });
+
+        cardLi.find(".copyCard").click(function(ev){
+                var card = $(this).closest(".cards > li").data('data');
+                var copyCard = ev.ctrlKey;
+                TASKBOARD.remote.api.copyCard(card.id, copyCard);
                 ev.preventDefault();
                 ev.stopPropagation();
             });
@@ -736,6 +779,20 @@ TASKBOARD.api = {
     },
 
     /*
+     * Moved row to new position.
+     */
+    moveRow : function(row){
+        TASKBOARD.refresh();
+    },
+
+    /*
+     * Copied all cards from another row into current row.
+     */
+    copyRow : function(row){
+        TASKBOARD.refresh();
+    },
+
+    /*
      * Loads cards from JSON into first column.
      */
     addCards : function(cards){
@@ -743,6 +800,26 @@ TASKBOARD.api = {
             card = card.card;
             $("#column_" + card.column_id + " ol.cards").eq(0).prepend(TASKBOARD.builder.buildCardFromJSON(card));
         });
+        TASKBOARD.utils.expandTaskboard();
+        TASKBOARD.remote.loading.stop();
+        TASKBOARD.tags.updateTagsList();
+        TASKBOARD.tags.updateCardSelection();
+    },
+
+    /*
+     * Copies card (as empty or full copy) loading from JSON into new position.
+     */
+    copyCard : function(card){
+        card = card.card;
+        var cardLi = TASKBOARD.builder.buildCardFromJSON(card);
+        var targetCell = $("#column_" + card.column_id + " .row_" + card.row_id);
+
+        targetCell.append(cardLi);
+        if(targetCell.children().length != card.position){
+            targetCell.children().eq(card.position - 1).before(cardLi);
+        }
+
+        cardLi.effect('highlight', {}, 1000);
         TASKBOARD.utils.expandTaskboard();
         TASKBOARD.remote.loading.stop();
         TASKBOARD.tags.updateTagsList();
@@ -957,10 +1034,25 @@ TASKBOARD.loadFromJSON = function(taskboard){
 
     $("#taskboard").html("")
 
+    // sum up hours for row + col
+    var sumRowHoursMap = {}
+    var sumColHoursMap = {}
+    $.each(taskboard.cards, function(i, card){
+        if(typeof sumRowHoursMap[card.row_id] === 'undefined'){
+            sumRowHoursMap[card.row_id] = 0;
+        }
+        if(typeof sumColHoursMap[card.column_id] === 'undefined'){
+            sumColHoursMap[card.column_id] = 0;
+        }
+        sumRowHoursMap[card.row_id] += card.hours_left;
+        sumColHoursMap[card.column_id] += card.hours_left;
+    });
+
     if(TASKBOARD.editor){
-        var metaLane = TASKBOARD.builder.buildMetaLane();
+        var metaLane = TASKBOARD.builder.buildMetaLane(sumRowHoursMap);
         $("#taskboard").append(metaLane);
     }
+
     // build a mapping between cards and their position in columns/rows
     var cardsMap = {}
     $.each(taskboard.cards, function(i, card){
@@ -975,6 +1067,7 @@ TASKBOARD.loadFromJSON = function(taskboard){
     // build columns
     $.each(taskboard.columns.sortByPosition(), function(i, column){
         column.cardsMap = cardsMap[column.id];
+        column.sumHours = (typeof sumColHoursMap[column.id] === 'undefined') ? 0 : sumColHoursMap[column.id];
         column.rows = taskboard.rows;
         $("#taskboard").append(TASKBOARD.builder.buildColumnFromJSON(column));
     });
@@ -1054,12 +1147,14 @@ TASKBOARD.openCard = function(card){
     bigCard.appendTo($('body')).hide()
         .openOverlay({ zIndex: 1001 });
 
+    /* NOTE: no burndown on card
     TASKBOARD.remote.get.cardBurndown(card.id, function(data){
         var burndown = $("<dd id='cardBurndown'></dd>");
         burndown.css({ width: '550px', height: '300px' });
         bigCard.append(burndown);
         TASKBOARD.burndown.render(burndown, data);
     });
+    */
 };
 
 TASKBOARD.openColorPicker = function(card, top, left){
@@ -1069,13 +1164,66 @@ TASKBOARD.openColorPicker = function(card, top, left){
             $(card).data('data').color = color;
             TASKBOARD.remote.api.changeCardColor($(card).data('data').id, color);
         },
-        colors : ['#F8E065', '#FAA919', '#12C2D9', '#FF5A00', '#35B44B'],
-        columns: 5,
+        colors : ['#F8E065', '#FAA919', '#12C2D9', '#FF5A00', '#35B44B', '#CCCCCC'],
+        columns: 6,
         top : top,
         left : left,
         defaultColor : $(card).data('data').color
     });
 }
+
+TASKBOARD.openRowActions = function(row, top, left){
+    var elemId = "rowActionsDialog";
+
+    // hide existing dialog
+    if($('#' + elemId).exists()){
+        var isSameRow = ( $('#' + elemId).data("data").id === row.id );
+        $('#' + elemId).fadeOut("fast", function(){ $(this).remove() });
+        if(isSameRow)
+            return;
+    }
+
+    var dialog = $('<div id="' + elemId + '">'
+        + '<ul>'
+        + '<li><form id="rowActionsMoveRowForm" action="#">'
+            + 'Move row to position: <input id="pos" type="text" name="pos" size="2"> <input type="submit" value="Move">'
+        + '</form></li>'
+        + '<li><form id="rowActionsCopyRowForm" action="#">'
+            + 'Copy cards from row ID: <input id="id" type="text" name="id" size="5"> <input type="submit" value="Copy">'
+        + '</form></li>'
+        + '</ul></div>');
+
+    dialog.data("data", row);
+
+    dialog.find("#rowActionsMoveRowForm").bind("submit", function(){
+        var posValue = $('#rowActionsMoveRowForm #pos').val().trim();
+        if(posValue.length == 0 || !posValue.match(/^[0-9]+$/) || row.position == posValue){
+            $('#rowActionsMoveRowForm #pos').effect("highlight", { color: "darkred" }).focus();
+            return false;
+        }
+
+        TASKBOARD.remote.api.moveRow(row.id, posValue);
+        $('#' + elemId).fadeOut("fast", function(){ $(this).remove() });
+        return false;
+    });
+
+    dialog.find("#rowActionsCopyRowForm").bind("submit", function(){
+        var srcRowId = $('#rowActionsCopyRowForm #id').val().trim();
+        if(srcRowId.length == 0 || !srcRowId.match(/^[0-9]+$/)){
+            $('#rowActionsCopyRowForm #id').effect("highlight", { color: "darkred" }).focus();
+            return false;
+        }
+
+        TASKBOARD.remote.api.copyRow(srcRowId, row.id);
+        $('#' + elemId).fadeOut("fast", function(){ $(this).remove() });
+        return false;
+    });
+
+    dialog.appendTo($('body'));
+    $('#' + elemId).css( { top : top, left : left, bottom : "auto", right : "auto" });
+    $('#' + elemId +' #pos').focus();
+};
+
 
 $(document).ready(function() {
     var self = TASKBOARD;
@@ -1275,6 +1423,11 @@ TASKBOARD.remote = {
             TASKBOARD.remote.callback("/taskboard/reorder_cards",
                             { position : position, column_id : columnId, id : cardId, row_id: rowId });
         },
+        copyCard : function(cardId, copyCard){
+            TASKBOARD.remote.callback('/taskboard/copy_card',
+                            { id: cardId, copy: (copyCard ? 1 : 0) },
+                            'copyCard');
+        },
         moveColumn : function(columnId, position){
             TASKBOARD.remote.callback("/taskboard/reorder_columns",
                             { position : position, id : columnId });
@@ -1309,6 +1462,12 @@ TASKBOARD.remote = {
         cleanRow : function(rowId){
             TASKBOARD.remote.callback('/taskboard/clean_row/', { id: rowId });
         },
+        moveRow : function(rowId, newPos){
+            TASKBOARD.remote.callback('/taskboard/reorder_rows', { id: rowId, position: newPos });
+        },
+        copyRow : function(srcRowId, trgRowId){
+            TASKBOARD.remote.callback('/taskboard/copy_row', { src_id: srcRowId, trg_id: trgRowId });
+        },
         updateCardHours : function(cardId, hours, updatedAt, callback){
             TASKBOARD.remote.callback('/card/update_hours/', { id: cardId, hours_left: hours, updated_at: updatedAt }, callback);
         },
@@ -1339,8 +1498,8 @@ window.sync = {
 
 $.each(['renameTaskboard',
         'addColumn', 'renameColumn', 'moveColumn', 'deleteColumn', 'cleanColumn',
-        'addRow', 'deleteRow', 'cleanRow',
-        'addCards','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard'],
+        'addRow', 'deleteRow', 'cleanRow', 'moveRow', 'copyRow',
+        'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard'],
         function(){
             var action = this;
             sync[action] = function(data, self){
