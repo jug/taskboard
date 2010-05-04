@@ -279,16 +279,16 @@ TASKBOARD.builder.buildColumnFromJSON = function(column){
                     $(this).closest(".column").data('data').name = value;
                     return value.escapeHTML();
                 }, { event : "dblclick",
-                     data : function(){ return $(this).closest(".column").data('data').name; },
-                     callback: function(){ TASKBOARD.utils.expandColumnsHeight(); }
+                    data : function(){ return $(this).closest(".column").data('data').name; },
+                    callback: function(){ TASKBOARD.utils.expandColumnsHeight(); }
              })
             .attr("title", TASKBOARD.builder.strings.columnHeaderTitle);
         // edit-mode-only
         columnLi.find(".deleteColumn")
             .bind("click", function(ev){
-                                ev.preventDefault();
-                                var closestColumn = $(this).closest('.column');
-                                if(closestColumn.find("ol.cards").children().length !== 0){
+                ev.preventDefault();
+                var closestColumn = $(this).closest('.column');
+                if(closestColumn.find("ol.cards").children().length !== 0){
                     $(this).warningTooltip("You cannot delete a column that is not empty!");
                 } else if ($("#taskboard .column").length == 1) {
                     $(this).warningTooltip("You cannot delete last column!");
@@ -440,14 +440,14 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
                 }
                 var value;
                 if((!updatedToday || confirm("You already updated hours today. Are you sure you want to change them?\n\n" +
-                                             "Click 'Cancel' to leave hours unchanged and wait till tomorrow or (if you are really sure) click 'OK' to save hours.")) &&
-                                             !isNaN(val) && val >= 0) {
-                        TASKBOARD.remote.api.updateCardHours($(this).parent().parent().data('data').id, val);
-                        $(this).parent().parent().data('data').hours_left = val;
-                        return val;
-                    } else {
-                        return this.revert;
-                    }
+                                             "Click 'Cancel' to leave hours unchanged and wait till tomorrow or (if you are really sure) click 'OK' to save hours."))
+                        && !isNaN(val) && val >= 0) {
+                    TASKBOARD.remote.api.updateCardHours($(this).parent().parent().data('data').id, val);
+                    $(this).parent().parent().data('data').hours_left = val;
+                    return val;
+                } else {
+                    return this.revert;
+                }
             });
 
         cardLi.find(".deleteCard").click(function(ev){
