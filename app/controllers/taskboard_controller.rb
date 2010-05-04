@@ -184,7 +184,7 @@ class TaskboardController < JuggernautSyncController
     updated_cards = []
     src_row.cards.each { |card|
       old_hours_left = card.hours_left
-      new_card = card.clone( trg_row.taskboard_id, cmap[card.column_id], trg_row.id )
+      new_card = card.clone( trg_row.taskboard_id, cmap[card.column.position], trg_row.id )
       new_card.save!
       new_card.move_to_bottom
       if old_hours_left > 0
