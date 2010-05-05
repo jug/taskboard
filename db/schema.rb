@@ -9,7 +9,26 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090922100811) do
+ActiveRecord::Schema.define(:version => 20100505005202) do
+
+  create_table "burndowns", :force => true do |t|
+    t.integer "taskboard_id",                   :null => false
+    t.string  "dates",                          :null => false
+    t.integer "capacity",        :default => 0, :null => false
+    t.integer "slack",           :default => 0, :null => false
+    t.integer "commitment_po",   :default => 0, :null => false
+    t.integer "commitment_team", :default => 0, :null => false
+  end
+
+  add_index "burndowns", ["taskboard_id"], :name => "index_burndowns_on_taskboard_id"
+
+  create_table "burnedhours", :force => true do |t|
+    t.integer "taskboard_id", :null => false
+    t.date    "date",         :null => false
+    t.integer "hours",        :null => false
+  end
+
+  add_index "burnedhours", ["taskboard_id", "date"], :name => "index_burnedhours_on_taskboard_id_and_date"
 
   create_table "cards", :force => true do |t|
     t.text     "name",                        :null => false
@@ -30,11 +49,12 @@ ActiveRecord::Schema.define(:version => 20090922100811) do
   add_index "cards", ["taskboard_id"], :name => "fk_cards_taskboard_id"
 
   create_table "columns", :force => true do |t|
-    t.text     "name",         :null => false
+    t.text     "name",                        :null => false
     t.integer  "position"
-    t.integer  "taskboard_id", :null => false
+    t.integer  "taskboard_id",                :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "type",         :default => 0, :null => false
   end
 
   add_index "columns", ["taskboard_id"], :name => "fk_columns_taskboard_id"

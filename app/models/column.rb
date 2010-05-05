@@ -29,7 +29,7 @@ class Column < ActiveRecord::Base
   DEFAULT_NAME = 'Brave new column'
 
   def clone taskboard_id = taskboard_id
-    Column.new(:name => name, :position => position, :taskboard_id => taskboard_id)
+    Column.new(:name => name, :position => position, :taskboard_id => taskboard_id, :type => type)
   end
 
   def to_json options = {}

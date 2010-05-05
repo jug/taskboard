@@ -1,6 +1,17 @@
 
 2010-05-05  jug  <taskboard@jens-gaspar.de>
 
+    # 09:32
+    * db/migrate/20100505005200_add_type_to_columns.rb (AddTypeToColumns),
+      db/migrate/20100505005201_create_burndowns.rb (CreateBurndowns),
+      db/migrate/20100505005202_create_burnedhours.rb (CreateBurnedhours),
+      app/models/column.rb (Column.clone),
+      db/schema.rb (Schema):
+    - taskboard-column: added type to mark as column with cards to calculate burndown
+    - taskboard: added burndown-table to track sprint-burndown of taskboard
+      with dates/capacity/slack and PO & team commitment
+    - taskboard: added burnhours-table to track burned hours of taskboard with date
+
     * app/controllers/taskboard_controller.rb (TaskboardController.copy_row):
     - fix bug on taskboard: used wrong column-reference to copy cards from src-row to target-row
 
