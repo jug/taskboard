@@ -666,9 +666,10 @@ TASKBOARD.form = {
         },
 
         initBurndown : function(){
-            var colsmap = {}; // col.id => 0|1 (=coltype)
+            var cols_arr = []; // col.id, 0|1 (=coltype)
             $('#selectBurndownCols option').each(function() {
-                colsmap[$(this).val()] = ($(this).attr('selected')) ? 1 : 0;
+                cols_arr.push( $(this).val() );
+                cols_arr.push( ($(this).attr('selected')) ? 1 : 0 );
             });
 
             var capacity = $('#inputBurndownCapacity').val().trim();
@@ -692,7 +693,7 @@ TASKBOARD.form = {
                 return false;
             }
 
-            TASKBOARD.remote.api.updateInitBurndown(colsmap, capacity, slack, commit_po, commit_team);
+            TASKBOARD.remote.api.updateInitBurndown(cols_arr.join(' '), capacity, slack, commit_po, commit_team);
             TASKBOARD.form.close();
             return false;
         }
@@ -975,6 +976,25 @@ TASKBOARD.api = {
         cardElements.css({ backgroundColor : card.color });
         cardElements.data('data').color = card.color;
     },
+
+    /*
+     * Updates taskboard after updating InitBurndown-setup.
+     * - cols_types: change CSS-style of column-title
+     */
+    updateInitBurndown : function(cols_types){ // api
+        // toggle Burndown-status of column: change CSS-style of column-titles
+        if(cols_types.length > 0){
+            var cols_arr = cols_types.split(' ');
+            for( i = 0; i < cols_arr.length; i += 2 ){
+                var col_id = cols_arr[i];
+                var isBurndownCol = (cols_arr[i+1]/*coltype*/ == 1);
+                $('#taskboard #column_' + col_id).data('data').coltype = (isBurndownCol) ? 1 : 0;
+                $('#column_' + col_id + ' h2')
+                    .toggleClass('Burndown', isBurndownCol)
+                    .effect('highlight', {}, 1000);
+            }
+        }
+    }
 };
 
 /*
@@ -1551,9 +1571,9 @@ TASKBOARD.remote = {
         changeCardColor : function(cardId, color){
             TASKBOARD.remote.callback('/card/change_color/', { id: cardId, color : color });
         },
-        updateInitBurndown : function(colsmap, capacity, slack, commit_po, commit_team){ // remote
+        updateInitBurndown : function(cols_arr, capacity, slack, commit_po, commit_team){ // remote
             TASKBOARD.remote.callback("/taskboard/update_initburndown",
-                    { taskboard_id : TASKBOARD.id, colsmap : colsmap, capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
+                    { taskboard_id : TASKBOARD.id, cols_arr : cols_arr, capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
         }
     }
 };
@@ -1578,7 +1598,7 @@ $.each(['renameTaskboard',
         'addColumn', 'renameColumn', 'moveColumn', 'deleteColumn', 'cleanColumn',
         'addRow', 'deleteRow', 'cleanRow', 'moveRow', 'copyRow',
         'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard',
-        'get_initburndown','update_initburndown'],
+        'updateInitBurndown'],
         function(){
             var action = this;
             sync[action] = function(data, self){

@@ -312,6 +312,23 @@ class TaskboardController < JuggernautSyncController
   def update_initburndown
     taskboard_id = params[:taskboard_id].to_i
 
+    after = ''
+    cols_arr = params[:cols_arr].split(' ')
+    cols_updarr = []
+    i = 0
+    while i < cols_arr.length do
+      col_id = cols_arr[i].to_i
+      col_type = cols_arr[i + 1].to_i
+      i = i + 2
+      column = Column.find(col_id)
+      if column.coltype != col_type
+        after = after + col_id.to_s + ":" + column.coltype.to_s + ">" + col_type.to_s + " "
+        cols_updarr.push( col_id.to_s, col_type.to_s )
+      end
+      column.coltype = col_type
+      column.save!
+    end
+
     initburndown = create_initburndown(taskboard_id)
     initburndown.capacity = params[:capacity].to_i
     initburndown.slack = params[:slack].to_i
@@ -319,7 +336,7 @@ class TaskboardController < JuggernautSyncController
     initburndown.commitment_team = params[:commitment_team].to_i
     initburndown.save!
 
-    send_success "Burndown setup updated!"
+    render :json => sync_update_initburndown( taskboard_id, cols_updarr.join(' '), { :after => after } )
   end
 
   private

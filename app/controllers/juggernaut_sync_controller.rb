@@ -197,6 +197,19 @@ class JuggernautSyncController < ApplicationController
     sync_card_action card, 'copyCard', options
   end
 
+  # InitBurndown actions
+
+  def sync_update_initburndown taskboard_id, cols_types, params = {}
+    options = { :message => "Burndown setup updated!",
+                :object_id => taskboard_id,
+                :before => "", # should come in params
+                :after => "" }
+    options.update params
+
+    report taskboard_id, 'updateInitBurndown', options[:message], options
+    send_via_juggernaut taskboard_id, 'updateInitBurndown', cols_types.to_json, options[:message]
+  end
+
   private
 
   def generate_js_call function, parameter
