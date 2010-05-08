@@ -161,6 +161,27 @@
             width: auto;
         }
 
+        #formActions fieldset#fieldsetFixBurndown {
+            width: 600px;
+        }
+
+        #formActions fieldset#fieldsetFixBurndown table#fixTable {
+            border: 1px solid black;
+            margin: 0.5em 0.5em 0.5em 0.5em;
+        }
+
+        #formActions fieldset#fieldsetFixBurndown table#fixTable td {
+            text-align: right;
+        }
+
+        #formActions fieldset#fieldsetFixBurndown table#fixTable tr {
+            vertical-align: top;
+        }
+
+        #formActions fieldset#fieldsetFixBurndown input[type=text] {
+            width: auto;
+        }
+
 #taskboard {
     clear:both;
 }

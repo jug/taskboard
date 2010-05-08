@@ -665,7 +665,7 @@ TASKBOARD.form = {
             return false;
         },
 
-        initBurndown : function(){
+        initBurndown : function(){ // form-action
             var dates_str = $('#inputBurndownDates').val().trim() + " ";
             if(dates_str.length > 0 && !dates_str.match(/^((0?[1-9]|[12]\d|3[01])\.(0?[1-9]|[12]\d|3[01])\.(2\d{3})?\s+)+$/)){
                 $('#inputBurndownDates').effect("highlight", { color: "#FF0000" }).focus();
@@ -700,6 +700,23 @@ TASKBOARD.form = {
             }
 
             TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), capacity, slack, commit_po, commit_team);
+            TASKBOARD.form.close();
+            return false;
+        },
+
+        fixBurndown : function(){ // form-action
+            var date_str = $('#inputFixBurndownDate').val();
+            if(date_str.length < 10){
+                $('#inputFixBurndownDate').effect("highlight", { color: "#FF0000" });
+                return false;
+            }
+            var hour_str = $('#inputFixBurndownHours').val().trim();
+            if(hour_str.length == 0 || !hour_str.match(/^[\+\-]?\d+$/)){
+                $('#inputFixBurndownHours').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+
+            TASKBOARD.remote.api.updateFixBurndown(date_str, hour_str);
             TASKBOARD.form.close();
             return false;
         }
@@ -779,6 +796,31 @@ TASKBOARD.form = {
             $("#inputBurndownCommitmentPO").val(initburndown.commitment_po);
             $("#inputBurndownCommitmentTeam").val(initburndown.commitment_team);
         }
+    },
+
+    updateFixBurndown : function(data){ // form
+        var capa = data.capacity;
+        $('#fixBurndownCapacity').text(capa);
+        $('#inputFixBurndownDate').val('');
+        $('#inputFixBurndownHours').val('');
+
+        var hours_arr = data.hours;
+        $('#fieldsetFixBurndown #fixTable tr.date').remove();
+        for( i=0; i < hours_arr.length; i++ ){
+            var date_str = hours_arr[i][0];
+            var hours = hours_arr[i][1];
+            capa -= hours;
+            row_td = $.tag("td", $.tag("a", date_str, { className: 'editdate', title: "Edit hours", href: '#' })); //date-str
+            row_td += $.tag("td", hours);
+            row_td += $.tag("td", capa);
+            tablerow = $.tag("tr", row_td, { className : 'date' });
+            $('#fieldsetFixBurndown #fixTable').append(tablerow);
+        }
+
+        $('#fieldsetFixBurndown #fixTable a.editdate').bind('click', function(ev){
+            $('#inputFixBurndownDate').val( $(this).text() );
+            $('#inputFixBurndownHours').val('').effect("highlight", { color: "#FF0000" }).focus();
+        });
     }
 };
 
@@ -1000,6 +1042,13 @@ TASKBOARD.api = {
                     .effect('highlight', {}, 1000);
             }
         }
+    },
+
+    /*
+     * Updates taskboard after fixing burndown (reopen fix-burndown dialog).
+     */
+    updateFixBurndown : function(){ // api
+        $('#headerBar a.actionFixBurndown').click(); // simul-click
     }
 };
 
@@ -1079,6 +1128,8 @@ TASKBOARD.init = function(){
     $(".actionShowBurndown").bind("click", this.showBurndown);
 
     $(".actionInitBurndown").bind("click", this.initBurndown);
+
+    $(".actionFixBurndown").bind("click", this.fixBurndown);
 
     $("#formActions img").rollover();
     $("#formActions .actionHideForm").click(function(){ TASKBOARD.form.close(); $("#actions li").removeClass("current"); });
@@ -1233,7 +1284,18 @@ TASKBOARD.initBurndown = function(ev){
         TASKBOARD.form.updateInitBurndown(data.initburndown);
         TASKBOARD.form.toggle('#fieldsetInitBurndown');
     });
-}
+};
+
+TASKBOARD.fixBurndown = function(ev){
+    ev.preventDefault();
+    var self = TASKBOARD;
+    $(this).parent().siblings().removeClass("current").end().toggleClass("current");
+
+    TASKBOARD.remote.get.taskboardFixBurndown(self.id, function(data){
+        TASKBOARD.form.updateFixBurndown(data);
+        TASKBOARD.form.toggle('#fieldsetFixBurndown');
+    });
+};
 
 TASKBOARD.openCard = function(card){
     $('.bigCard').remove();
@@ -1494,9 +1556,14 @@ TASKBOARD.remote = {
         cardBurndown: function(id, callback){
             $.getJSON('/card/load_burndown/' + id, callback);
         },
-
         taskboardInitBurndown: function(id, callback){
             $.getJSON("/taskboard/get_initburndown/" + id, function(data){
+                callback(data);
+                TASKBOARD.remote.loading.stop();
+            });
+        },
+        taskboardFixBurndown: function(id, callback){
+            $.getJSON("/taskboard/get_fixburndown/" + id, function(data){
                 callback(data);
                 TASKBOARD.remote.loading.stop();
             });
@@ -1581,6 +1648,10 @@ TASKBOARD.remote = {
             TASKBOARD.remote.callback("/taskboard/update_initburndown",
                     { taskboard_id : TASKBOARD.id, dates : dates_str, cols_arr : cols_arr,
                       capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
+        },
+        updateFixBurndown : function(date_str, hour_str){ // remote
+            TASKBOARD.remote.callback("/taskboard/update_fixburndown",
+                    { taskboard_id : TASKBOARD.id, date_str : date_str, hours : hour_str });
         }
     }
 };
@@ -1605,7 +1676,7 @@ $.each(['renameTaskboard',
         'addColumn', 'renameColumn', 'moveColumn', 'deleteColumn', 'cleanColumn',
         'addRow', 'deleteRow', 'cleanRow', 'moveRow', 'copyRow',
         'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard',
-        'updateInitBurndown'],
+        'updateInitBurndown','updateFixBurndown'],
         function(){
             var action = this;
             sync[action] = function(data, self){

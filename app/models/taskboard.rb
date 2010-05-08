@@ -71,10 +71,12 @@ class Taskboard < ActiveRecord::Base
     return burndown
   end
 
-  def update_burnedhours hours, date_at = Time.now
-    burnedhour = self.burnedhours.select {|h| h.date.beginning_of_day <= date_at && date_at <= h.date.end_of_day}[0]
+  def update_burnedhours hours, added_at = Time.now
+    burnedhour = self.burnedhours.sort{|x,y| y.date <=> x.date }.select {|h|
+      h.date.beginning_of_day <= added_at && h.date.end_of_day >= added_at
+    }[0]
     if burnedhour.nil?
-      self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => date_at, :hours => hours )
+      self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => added_at, :hours => hours )
       self.save
     else
       Burnedhour.update_counters burnedhour.id, :hours => hours

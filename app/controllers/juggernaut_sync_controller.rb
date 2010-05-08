@@ -210,6 +210,17 @@ class JuggernautSyncController < ApplicationController
     send_via_juggernaut taskboard_id, 'updateInitBurndown', cols_types.to_json, options[:message]
   end
 
+  def sync_update_fixburndown taskboard_id, date_str, params = {}
+    options = { :message => "Burndown fix for [" + date_str + "] saved!",
+                :object_id => taskboard_id,
+                :before => "", # should come in params
+                :after => "" }
+    options.update params
+
+    report taskboard_id, 'updateFixBurndown', options[:message], options
+    send_via_juggernaut taskboard_id, 'updateFixBurndown', "".to_json, options[:message]
+  end
+
   private
 
   def generate_js_call function, parameter

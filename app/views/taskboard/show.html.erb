@@ -49,7 +49,10 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
             <li><a class="actionShowTagSearch" href="#" title="Filter cards by tags">Tags</a></li>
             <li><a class="actionToggleAll" href="#" title="Zoom cards view">Zoom</a></li>
             <li><a class="actionShowBurndown" href="#" title="Show burndown chart for this taskboard">Burndown</a></li>
+            <% if session[:editor] -%>
             <li><a class="actionInitBurndown" href="#" title="Setup burndown for this taskboard">Setup Burndown</a></li>
+            <li><a class="actionFixBurndown" href="#" title="Fix burndown for this taskboard">Fix Burndown</a></li>
+            <% end -%>
             <li class="user"><%= render :partial => "login/user_meta" %></li>
         </ul>
     </div>
@@ -104,7 +107,24 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
                      <td colspan="2"><input type="submit" value="Save" /></td>
                   </tr>
                 </table>
+            </fieldset>
+            <fieldset id="fieldsetFixBurndown">
+                <a class='actionHideForm' href='#' title='Hide'><img src='/images/hide_off.png' alt='Hide'/></a>
+                <label>Fix Burndown:</label>
+                Capacity: <span id="fixBurndownCapacity"></span> hours
+                <table id="fixTable">
+                  <tr>
+                     <th>Date</th>
+                     <th>Hours</th>
+                     <th>Burndown</th>
+                  </tr>
+                </table>
 
+                Selected date:
+                <input id="inputFixBurndownDate" type="text" size="10" readonly="readonly" />
+                change by (+/-) hours
+                <input id="inputFixBurndownHours" type="text" size="5" />
+                <input type="submit" value="Save" />
             </fieldset>
         </form>
     </div>

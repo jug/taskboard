@@ -18,7 +18,7 @@
 class TaskboardController < JuggernautSyncController
   include ApplicationHelper
 
-  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown", "get_initburndown"]
+  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown", "get_initburndown", "get_fixburndown"]
 
   def index
     redirect_to :controller => 'project', :action => 'index'
@@ -420,6 +420,62 @@ class TaskboardController < JuggernautSyncController
     render :json => sync_update_initburndown( taskboard_id, cols_updarr.join(' '), { :after => after } )
   end
 
+  def get_fixburndown
+    taskboard_id = params[:id].to_i
+    taskboard = Taskboard.find(taskboard_id)
+    initburndown = create_initburndown(taskboard_id)
+
+    result = {}
+    result['capacity'] = initburndown.capacity
+    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates )
+
+    render :json => result.to_json
+  end
+
+  # returns: [ [ 'YYYY-MM-DD', hours, secs ], ... ]
+  def get_initburndown_hours taskboard, dates_str
+    dates_arr = []; # initburndown.dates in secs, ...
+    dates_map = {}; # dates_arr[x] => dd.mm.yyyy
+    hours_map = {}; # dd.mm.yyyy (for initburndown.dates) => hours
+
+    # read Initburndown.dates
+    dates_str.split(' ').each { |date|
+      match_data = /^(\d+)\.(\d+)\.(\d+)$/.match( date )
+      date_s = sprintf( "%04d-%02d-%02d", match_data[3].to_i, match_data[2].to_i, match_data[1].to_i )
+      date_i = make_time( date_s )
+      dates_arr.push( date_i )
+      dates_map[date_i] = date_s
+      hours_map[date_s] = 0
+    }
+
+    # read Burnedhours
+    taskboard.burnedhours.sort_by {|bhour| bhour.date}.each { |bhour|
+      date_i = find_in_array( dates_arr, make_time_from_date(bhour.date).to_i )
+      if not date_i.nil?
+        date_s = dates_map[date_i]
+        hours_map[date_s] = hours_map[date_s] + bhour.hours
+      end
+    }
+
+    result_arr = []
+    dates_arr.each { |date_i|
+      date_s = dates_map[date_i]
+      result_arr.push [ date_s, hours_map[date_s], date_i ]
+    }
+
+    result_arr
+  end
+
+  def update_fixburndown
+    taskboard = Taskboard.find( params[:taskboard_id].to_i )
+    date_str = params[:date_str]
+    update_hours = params[:hours]
+    update_time = make_time_from_str( date_str )
+    taskboard.update_burnedhours( update_hours.to_i, update_time )
+
+    render :json => sync_update_fixburndown( taskboard.id, date_str, { :after => date_str + ":" + update_hours.to_s } )
+  end
+
   private
 
     def insert_column taskboard_id, name = Column::DEFAULT_NAME, position = 1
@@ -444,6 +500,17 @@ class TaskboardController < JuggernautSyncController
         initburndown = Initburndown.new(:taskboard_id => taskboard_id, :dates => "")
       end
       initburndown
+    end
+
+    def find_in_array haystack, needle
+      return nil if haystack.nil? or haystack.length == 0
+      return haystack.first if needle < haystack.first
+
+      for i in 0 ... haystack.length - 1
+        return haystack[i] if haystack[i] <= needle and needle < haystack[i+1]
+      end
+
+      return haystack.last
     end
 
     def send_success message = ''
