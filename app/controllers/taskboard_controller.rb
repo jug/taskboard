@@ -106,11 +106,19 @@ class TaskboardController < JuggernautSyncController
   end
 
   def clean_column
+    sumhours = 0
     column = Column.find(params[:id].to_i)
     column.cards.each { |card|
+      sumhours = sumhours + card.hours_left
       card.remove_from_list
       Card.delete card.id
     }
+
+    if sumhours > 0 and column.coltype == 1
+      taskboard = Taskboard.find(column.taskboard_id)
+      taskboard.update_burnedhours -sumhours
+    end
+
     render :json => sync_clean_column(column)
   end
 
@@ -129,11 +137,25 @@ class TaskboardController < JuggernautSyncController
   end
 
   def clean_row
+    sumhours = 0
     row = Row.find(params[:id].to_i)
     row.cards.each { |card|
+      hours_left = card.hours_left
+      if hours_left > 0
+        column = Column.find(card.column_id)
+        if column.coltype == 1
+          sumhours = sumhours + hours_left
+        end
+      end
       card.remove_from_list
       Card.delete card.id
     }
+
+    if sumhours > 0
+      taskboard = Taskboard.find(row.taskboard_id)
+      taskboard.update_burnedhours -sumhours
+    end
+
     render :json => sync_clean_row(row)
   end
 
@@ -163,11 +185,13 @@ class TaskboardController < JuggernautSyncController
 
     # mapping for column-positions
     cmap = [] # src-col-pos => trg-col-id
+    cburndownmap = [] # col_id => 0|1 (=is-burndown-col)
     max_colpos = 0
     trg_cols = Column.all( :conditions => { :taskboard_id => trg_row.taskboard_id },
                            :order => "position" )
     trg_cols.each { |col|
       cmap[col.position] = col.id
+      cburndownmap[col.id] = col.coltype
       if col.position > max_colpos
         max_colpos = col.position
       end
@@ -181,17 +205,28 @@ class TaskboardController < JuggernautSyncController
     }
 
     # copy cards from src-row to target-row
+    sumhours = 0
     updated_cards = []
     src_row.cards.each { |card|
       old_hours_left = card.hours_left
-      new_card = card.clone( trg_row.taskboard_id, cmap[card.column.position], trg_row.id )
+      col_id = cmap[card.column.position]
+      new_card = card.clone( trg_row.taskboard_id, col_id, trg_row.id )
       new_card.save!
       new_card.move_to_bottom
       if old_hours_left > 0
-         new_card.update_hours old_hours_left
+        new_card.update_hours old_hours_left
+
+        if cburndownmap[col_id] == 1
+          sumhours = sumhours + old_hours_left
+        end
       end
       updated_cards << new_card
     }
+
+    if sumhours > 0
+      taskboard = Taskboard.find(trg_row.taskboard_id)
+      taskboard.update_burnedhours sumhours
+    end
 
     if updated_cards.empty?
       send_success
@@ -264,7 +299,13 @@ class TaskboardController < JuggernautSyncController
       card.save!
       card.insert_at( src_card.position + 1 )
       if old_hours_left > 0
-         card.update_hours old_hours_left
+        card.update_hours old_hours_left
+
+        column = Column.find(card.column_id)
+        if column.coltype == 1
+          taskboard = Taskboard.find(card.taskboard_id)
+          taskboard.update_burnedhours old_hours_left
+        end
       end
     else
       card = Card.new(:taskboard_id => src_card.taskboard_id,
@@ -285,6 +326,23 @@ class TaskboardController < JuggernautSyncController
     target_row_id = params[:row_id].to_i unless params[:row_id].blank?
     target_position = params[:position].to_i unless params[:position].blank?
 
+    if card.column_id != target_column_id
+      hours_left = card.hours_left
+      if hours_left > 0
+        src_column = Column.find(card.column_id)
+        trg_column = Column.find(target_column_id)
+        if src_column.coltype != trg_column.coltype
+          taskboard = Taskboard.find(card.taskboard_id)
+          if src_column.coltype == 1
+            factor = -1
+          else
+            factor = 1
+          end
+          taskboard.update_burnedhours factor * hours_left
+        end
+      end
+    end
+
     card.move_to(target_column_id, target_row_id, target_position)
     render :json => sync_move_card(card, { :before => before })
   end
@@ -293,6 +351,14 @@ class TaskboardController < JuggernautSyncController
     # first remove from list, than delete from db
     # to keep the rest of the list consistent
     card = Card.find(params[:id].to_i)
+    hours_left = card.hours_left
+    if hours_left > 0
+      column = Column.find(card.column_id)
+      if column.coltype == 1
+        taskboard = Taskboard.find(card.taskboard_id)
+        taskboard.update_burnedhours -hours_left
+      end
+    end
     card.remove_from_list
     Card.delete params[:id].to_i
     render :json => sync_delete_card(card)

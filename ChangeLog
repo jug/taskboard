@@ -1,6 +1,17 @@
 
 2010-05-08  jug  <taskboard@jens-gaspar.de>
 
+    # 17:59
+    * app/controllers/taskboard_controller.rb (TaskboardController.clean_column, ~.clean_row,
+        ~.copy_row, ~.copy_card, ~.reorder_cards, ~.remove_card),
+      app/controllers/card_controller.rb (CardController.update_hours),
+      app/models/taskboard.rb (Taskboard.update_burnedhours, ~.to_json):
+    - update taskboard burned-hours if moving cards with hours from burndown-columns
+      marked with coltype=1 for current date
+      - on moving cards from/to burndown-columns
+      - on removing cards
+      - on copying cards
+
     # 15:54
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown; TASKBOARD.remote.updateInitBurndown),
       app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown),

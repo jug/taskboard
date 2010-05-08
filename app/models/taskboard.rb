@@ -71,6 +71,27 @@ class Taskboard < ActiveRecord::Base
     return burndown
   end
 
+  def update_burnedhours hours, date_at = Time.now
+    burnedhour = self.burnedhours.select {|h| h.date.beginning_of_day <= date_at && date_at <= h.date.end_of_day}[0]
+    if burnedhour.nil?
+      self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => date_at, :hours => hours )
+      self.save
+    else
+      Burnedhour.update_counters burnedhour.id, :hours => hours
+    end
+  end
+
+  def to_json options = {}
+    options[:except] = [:created_at, :updated_at, :taskboard_id]
+    options[:except] << :url if url.nil?
+    options[:except] << :issue_no if issue_no.nil?
+    options[:methods] = []
+    options[:methods] << :tag_list
+    options[:methods] << :hours_left
+    options[:methods] << :hours_left_updated
+    super(options)
+  end
+
   def to_json options = {}
     options[:include] = { :columns => {}, :rows => {}, :burnedhours => {},
                           :cards => { :methods => [:tag_list, :hours_left, :hours_left_updated] } }
