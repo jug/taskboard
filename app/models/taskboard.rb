@@ -1,17 +1,17 @@
 # Copyright (C) 2009 Cognifide
-# 
+#
 # This file is part of Taskboard.
-# 
+#
 # Taskboard is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Taskboard is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 
@@ -24,6 +24,9 @@ class Taskboard < ActiveRecord::Base
   has_many :cards
   has_many :columns, :order => "position"
   has_many :rows, :order => "position"
+  has_many :burnedhours, :order => "date"
+
+  #has_one :initburndown, :dependent => :destroy
 
   DEFAULT_NAME = "Brand new taskboard"
 
@@ -52,6 +55,8 @@ class Taskboard < ActiveRecord::Base
       clonned_card.save!
     }
 
+    # don't copy initburndown + burnedhours
+
     clonned_taskboard
   end
 
@@ -65,9 +70,10 @@ class Taskboard < ActiveRecord::Base
 
     return burndown
   end
-  
+
   def to_json options = {}
-    options[:include] = { :columns => {}, :rows => {}, :cards => { :methods => [:tag_list, :hours_left, :hours_left_updated] } }
+    options[:include] = { :columns => {}, :rows => {}, :burnedhours => {},
+                          :cards => { :methods => [:tag_list, :hours_left, :hours_left_updated] } }
     options[:except] = [:created_at, :updated_at]
     super(options)
   end

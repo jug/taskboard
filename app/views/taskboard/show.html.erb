@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 -%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
     <title>Taskboard</title>
@@ -49,6 +49,7 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
             <li><a class="actionShowTagSearch" href="#" title="Filter cards by tags">Tags</a></li>
             <li><a class="actionToggleAll" href="#" title="Zoom cards view">Zoom</a></li>
             <li><a class="actionShowBurndown" href="#" title="Show burndown chart for this taskboard">Burndown</a></li>
+            <li><a class="actionInitBurndown" href="#" title="Setup burndown for this taskboard">Setup Burndown</a></li>
             <li class="user"><%= render :partial => "login/user_meta" %></li>
         </ul>
     </div>
@@ -70,6 +71,40 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
                 <a class='actionHideForm' href='#' title='Hide'><img src='/images/hide_off.png' alt='Hide'/></a>
                 <label>Filter cards by tags:</label>
                 <ul id="filterTags"></ul>
+            </fieldset>
+            <fieldset id="fieldsetInitBurndown">
+                <a class='actionHideForm' href='#' title='Hide'><img src='/images/hide_off.png' alt='Hide'/></a>
+                <label>Setup Burndown:</label>
+                <table id="setupTable">
+                  <tr class="text">
+                     <td class="label" colspan="2">Dates (Format: <tt>DD.MM DD.MM ...</tt>)<br/>
+                          <textarea id="inputBurndownDates" cols="35" rows="4"></textarea></td>
+                  </tr>
+                  <tr>
+                     <td class="label" colspan="2">Burndown columns (multiple selection possible):<br/>
+                          <select id="selectBurndownCols" multiple="multiple"><option>Test</option></select></td>
+                  </tr>
+                  <tr>
+                     <td><input id="inputBurndownCapacity" type="text" size="4" maxlength="4" /></td>
+                     <td class="label">Capacity</td>
+                  </tr>
+                  <tr>
+                     <td><input id="inputBurndownSlack" type="text" size="4" maxlength="4" /></td>
+                     <td class="label">Slack</td>
+                  </tr>
+                  <tr>
+                     <td><input id="inputBurndownCommitmentPO" type="text" size="4" maxlength="4" /></td>
+                     <td class="label">Commitment&nbsp;Product-Owner</td>
+                  </tr>
+                  <tr>
+                     <td><input id="inputBurndownCommitmentTeam" type="text" size="4" maxlength="4" /></td>
+                     <td class="label">Commitment&nbsp;Team</td>
+                  </tr>
+                  <tr>
+                     <td colspan="2"><input type="submit" value="Save" /></td>
+                  </tr>
+                </table>
+
             </fieldset>
         </form>
     </div>

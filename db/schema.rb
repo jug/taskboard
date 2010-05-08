@@ -9,18 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100505005202) do
-
-  create_table "burndowns", :force => true do |t|
-    t.integer "taskboard_id",                   :null => false
-    t.string  "dates",                          :null => false
-    t.integer "capacity",        :default => 0, :null => false
-    t.integer "slack",           :default => 0, :null => false
-    t.integer "commitment_po",   :default => 0, :null => false
-    t.integer "commitment_team", :default => 0, :null => false
-  end
-
-  add_index "burndowns", ["taskboard_id"], :name => "index_burndowns_on_taskboard_id"
+ActiveRecord::Schema.define(:version => 20100505225500) do
 
   create_table "burnedhours", :force => true do |t|
     t.integer "taskboard_id", :null => false
@@ -54,7 +43,7 @@ ActiveRecord::Schema.define(:version => 20100505005202) do
     t.integer  "taskboard_id",                :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "type",         :default => 0, :null => false
+    t.integer  "coltype",      :default => 0, :null => false
   end
 
   add_index "columns", ["taskboard_id"], :name => "fk_columns_taskboard_id"
@@ -66,6 +55,17 @@ ActiveRecord::Schema.define(:version => 20100505005202) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "initburndowns", :force => true do |t|
+    t.integer "taskboard_id",                   :null => false
+    t.string  "dates",                          :null => false
+    t.integer "capacity",        :default => 0, :null => false
+    t.integer "slack",           :default => 0, :null => false
+    t.integer "commitment_po",   :default => 0, :null => false
+    t.integer "commitment_team", :default => 0, :null => false
+  end
+
+  add_index "initburndowns", ["taskboard_id"], :name => "index_initburndowns_on_taskboard_id"
 
   create_table "projects", :force => true do |t|
     t.text     "name",       :null => false

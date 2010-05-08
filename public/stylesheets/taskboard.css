@@ -149,6 +149,18 @@
             width: 390px;
         }
 
+        #formActions fieldset#fieldsetInitBurndown {
+            width: 450px;
+        }
+
+        #formActions fieldset#fieldsetInitBurndown table#setupTable tr {
+            vertical-align: top;
+        }
+
+        #formActions fieldset#fieldsetInitBurndown input[type=text] {
+            width: auto;
+        }
+
 #taskboard {
     clear:both;
 }
@@ -212,6 +224,10 @@
         #taskboard .column h2 {
             text-align: center;
             margin: 0 5px 10px;
+        }
+
+        #taskboard .column h2.Burndown {
+            font-style: italic;
         }
 
         #taskboard .column h2:hover {

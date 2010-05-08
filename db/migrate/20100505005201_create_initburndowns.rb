@@ -1,10 +1,10 @@
 require "migration_helpers"
 
-class CreateBurndowns < ActiveRecord::Migration
+class CreateInitburndowns < ActiveRecord::Migration
    extend MigrationHelpers
 
   def self.up
-    create_table :burndowns do |t|
+    create_table :initburndowns do |t|
       t.integer  :taskboard_id, :null => false
       t.string   :dates, :null => false
       t.integer  :capacity, :null => false, :default => 0
@@ -13,12 +13,12 @@ class CreateBurndowns < ActiveRecord::Migration
       t.integer  :commitment_team, :null => false, :default => 0
     end
 
-    add_index :burndowns, :taskboard_id
-    add_foreign_key(:burndowns, :taskboard_id, :taskboards)
+    add_index :initburndowns, :taskboard_id
+    add_foreign_key(:initburndowns, :taskboard_id, :taskboards)
   end
 
   def self.down
-    drop_table :burndowns
+    drop_table :initburndowns
   end
 end
 

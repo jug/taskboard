@@ -125,9 +125,9 @@ TASKBOARD.builder.options = {
             var column_id = ui.item.parent().parent().data('data').id;
             var row_id = ui.item.parent().data('data').id;
             // TODO: check if card column and position changed
-            //    if(position != ui.item.data('position')){
+            //   if(position != ui.item.data('position')){
                 TASKBOARD.remote.api.moveCard(ui.item.data("data").id, column_id, row_id, position);
-            //    }
+            //   }
         },
         zIndex : 5
     },
@@ -240,7 +240,8 @@ TASKBOARD.builder.buildColumnFromJSON = function(column){
     var colHours = (column.sumHours > 0)
         ? $.tag("span", "(S" + column.sumHours + ")", { className: "ColSum", title: "hours of column" })
         : '';
-    var header = $.tag("h2", column.name.escapeHTML() + colHours);
+    var headerClass = (column.coltype == 1) ? "Burndown" : "Normal";
+    var header = $.tag("h2", column.name.escapeHTML() + colHours, { className: headerClass });
     var columnLi = "";
     // edit-mode-only
     if(TASKBOARD.editor){
@@ -385,7 +386,7 @@ TASKBOARD.builder.buildMetaLane = function(sumHoursMap){
 TASKBOARD.builder.buildCardFromJSON = function(card){
     var cardLi = "";
     if(card.issue_no){
-        cardLi += $.tag('span', $.tag('a', card.issue_no, { href : card.url, rel : 'external'}) + ": ",    { className : 'alias' });
+        cardLi += $.tag('span', $.tag('a', card.issue_no, { href : card.url, rel : 'external'}) + ": ",   { className : 'alias' });
     }
     cardLi += $.tag("span", card.name.escapeHTML(), { className : 'title' });
 
@@ -440,8 +441,8 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
                 }
                 var value;
                 if((!updatedToday || confirm("You already updated hours today. Are you sure you want to change them?\n\n" +
-                                             "Click 'Cancel' to leave hours unchanged and wait till tomorrow or (if you are really sure) click 'OK' to save hours."))
-                        && !isNaN(val) && val >= 0) {
+                                             "Click 'Cancel' to leave hours unchanged and wait till tomorrow or (if you are really sure) click 'OK' to save hours.")) &&
+                                             !isNaN(val) && val >= 0) {
                     TASKBOARD.remote.api.updateCardHours($(this).parent().parent().data('data').id, val);
                     $(this).parent().parent().data('data').hours_left = val;
                     return val;
@@ -652,6 +653,7 @@ TASKBOARD.form = {
             TASKBOARD.form.close();
             return false;
         },
+
         addColumn : function(){
             var value = $('#inputAddColumn').val().trim();
             if(value.length === 0){
@@ -659,6 +661,38 @@ TASKBOARD.form = {
                 return false;
             }
             TASKBOARD.remote.api.addColumn(value);
+            TASKBOARD.form.close();
+            return false;
+        },
+
+        initBurndown : function(){
+            var colsmap = {}; // col.id => 0|1 (=coltype)
+            $('#selectBurndownCols option').each(function() {
+                colsmap[$(this).val()] = ($(this).attr('selected')) ? 1 : 0;
+            });
+
+            var capacity = $('#inputBurndownCapacity').val().trim();
+            if(capacity.length > 0 && !capacity.match(/^[0-9]+$/)){
+                $('#inputBurndownCapacity').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+            var slack = $('#inputBurndownSlack').val().trim();
+            if(slack.length > 0 && !slack.match(/^[0-9]+$/)){
+                $('#inputBurndownSlack').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+            var commit_po = $('#inputBurndownCommitmentPO').val().trim();
+            if(commit_po.length > 0 && !commit_po.match(/^[0-9]+$/)){
+                $('#inputBurndownCommitmentPO').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+            var commit_team = $('#inputBurndownCommitmentTeam').val().trim();
+            if(commit_team.length > 0 && !commit_team.match(/^[0-9]+$/)){
+                $('#inputBurndownCommitmentTeam').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+
+            TASKBOARD.remote.api.updateInitBurndown(colsmap, capacity, slack, commit_po, commit_team);
             TASKBOARD.form.close();
             return false;
         }
@@ -717,6 +751,27 @@ TASKBOARD.form = {
         var othersWidth = select.outerWidth() + fieldset.find("span").outerWidth() + fieldset.find(":submit").outerWidth() + 25; // 25px is for spaces etc.
         $("#inputAddCards").width(fieldset.width() - othersWidth);
         fieldset.hide().closest("form").hide().css({visibility: ""});
+    },
+
+    updateInitBurndown : function(initburndown){ // form
+        var options = [];
+        $('#taskboard .column').each(function(){
+            var column = $(this).data("data");
+            if(column.coltype == 1){
+                options.push($.tag("option", column.name, { value: column.id, selected: "selected" }));
+            } else {
+                options.push($.tag("option", column.name, { value: column.id }));
+            }
+        });
+        $("#selectBurndownCols").html(options.join(''));
+
+        if(initburndown){
+            $("#inputBurndownDates").val(initburndown.dates);
+            $("#inputBurndownCapacity").val(initburndown.capacity);
+            $("#inputBurndownSlack").val(initburndown.slack);
+            $("#inputBurndownCommitmentPO").val(initburndown.commitment_po);
+            $("#inputBurndownCommitmentTeam").val(initburndown.commitment_team);
+        }
     }
 };
 
@@ -919,7 +974,7 @@ TASKBOARD.api = {
         var cardElements = $('#card_' + card.id).add("#bigCard_" + card.id);
         cardElements.css({ backgroundColor : card.color });
         cardElements.data('data').color = card.color;
-    }
+    },
 };
 
 /*
@@ -996,6 +1051,8 @@ TASKBOARD.init = function(){
     });
 
     $(".actionShowBurndown").bind("click", this.showBurndown);
+
+    $(".actionInitBurndown").bind("click", this.initBurndown);
 
     $("#formActions img").rollover();
     $("#formActions .actionHideForm").click(function(){ TASKBOARD.form.close(); $("#actions li").removeClass("current"); });
@@ -1109,7 +1166,6 @@ TASKBOARD.burndown.render = function(element, data){
     $.plot(element, [data], TASKBOARD.burndown.options);
 };
 
-
 TASKBOARD.showBurndown = function(ev){
     ev.preventDefault();
     var self = TASKBOARD;
@@ -1140,6 +1196,18 @@ TASKBOARD.showBurndown = function(ev){
 
     });
 };
+
+
+TASKBOARD.initBurndown = function(ev){
+    ev.preventDefault();
+    var self = TASKBOARD;
+    $(this).parent().siblings().removeClass("current").end().toggleClass("current");
+
+    TASKBOARD.remote.get.taskboardInitBurndown(self.id, function(data){
+        TASKBOARD.form.updateInitBurndown(data.initburndown);
+        TASKBOARD.form.toggle('#fieldsetInitBurndown');
+    });
+}
 
 TASKBOARD.openCard = function(card){
     $('.bigCard').remove();
@@ -1223,7 +1291,6 @@ TASKBOARD.openRowActions = function(row, top, left){
     $('#' + elemId).css( { top : top, left : left, bottom : "auto", right : "auto" });
     $('#' + elemId +' #pos').focus();
 };
-
 
 $(document).ready(function() {
     var self = TASKBOARD;
@@ -1400,6 +1467,13 @@ TASKBOARD.remote = {
         },
         cardBurndown: function(id, callback){
             $.getJSON('/card/load_burndown/' + id, callback);
+        },
+
+        taskboardInitBurndown: function(id, callback){
+            $.getJSON("/taskboard/get_initburndown/" + id, function(data){
+                callback(data);
+                TASKBOARD.remote.loading.stop();
+            });
         }
     },
     //TODO: change to POST requests
@@ -1476,6 +1550,10 @@ TASKBOARD.remote = {
         },
         changeCardColor : function(cardId, color){
             TASKBOARD.remote.callback('/card/change_color/', { id: cardId, color : color });
+        },
+        updateInitBurndown : function(colsmap, capacity, slack, commit_po, commit_team){ // remote
+            TASKBOARD.remote.callback("/taskboard/update_initburndown",
+                    { taskboard_id : TASKBOARD.id, colsmap : colsmap, capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
         }
     }
 };
@@ -1499,7 +1577,8 @@ window.sync = {
 $.each(['renameTaskboard',
         'addColumn', 'renameColumn', 'moveColumn', 'deleteColumn', 'cleanColumn',
         'addRow', 'deleteRow', 'cleanRow', 'moveRow', 'copyRow',
-        'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard'],
+        'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard',
+        'get_initburndown','update_initburndown'],
         function(){
             var action = this;
             sync[action] = function(data, self){
@@ -1569,6 +1648,29 @@ TASKBOARD.cookie = {
     setTaskboardZoom : function(taskboardId, zoom){
         return $.cookie('taskboard_zoom_' + taskboardId, zoom, this.options);
     }
+};
+
+// utility to dump DOM-object
+TASKBOARD.dumpProps = function( obj, parent ) {
+    // Go through all the properties of the passed-in object
+    var msg = '';
+    for (var i in obj) {
+        // if a parent (2nd parameter) was passed in, then use that to build the message.
+        // Message includes i (the object's property name) then the object's property value on a new line
+        msg += (parent) ? parent + "." + i + "\n" + obj[i] : i + "\n" + obj[i];
+        msg += "\n";
+
+        // If this property (i) is an object, then recursively process the object
+        if (typeof(obj[i]) == "object") {
+            if (parent) {
+                TASKBOARD.dumpProps(obj[i], parent + "." + i);
+            } else {
+                TASKBOARD.dumpProps(obj[i], i);
+            }
+        }
+    }
+
+    alert(msg);
 };
 
 

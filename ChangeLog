@@ -1,4 +1,33 @@
 
+2010-05-08  jug  <taskboard@jens-gaspar.de>
+
+    # 12:50
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildColumnFromJSON;
+        TASKBOARD.form.actions.initBurndown; TASKBOARD.form.updateInitBurndown; TASKBOARD.init;
+        TASKBOARD.initBurndown; TASKBOARD.remote.get.taskboardInitBurndown;
+        TASKBOARD.remote.api.updateInitBurndown; TASKBOARD.dumpProps),
+      public/stylesheets/taskboard.css,
+      app/controllers/taskboard_controller.rb (TaskboardController, ~.copy_row, ~.add_card,
+        ~.get_initburndown, ~.update_initburndown, ~.create_initburndown taskboard_id, ~.send_success),
+      app/views/taskboard/show.html.erb (actionInitBurndown, fieldsetInitBurndown),
+      app/models/initburndown.rb (Initburndown, ~.clone, ~.to_json),
+      app/models/taskboard.rb (Taskboard, ~.to_json),
+      app/models/burnedhour.rb (Burnedhour),
+      app/models/column.rb (Column.clone),
+      db/migrate/20100505225500_add_coltype_to_columns.rb (AddColtypeToColumns),
+      db/migrate/20100505005201_create_initburndowns.rb (CreateInitburndowns),
+      db/migrate/20100505005200_add_type_to_columns.rb (REMOVED),
+      db/migrate/20100505005201_create_burndowns.rb (REMOVED),
+      db/schema.rb (Schema):
+    - added burndown to track sprint-burndown of taskboard
+      - taskboard: added action-dialog in action-bar to 'Setup Burndown'
+        with dates/burndown-columns/capacity/slack and PO & team commitment
+      - taskboard-burndown: load and update burndown data
+      - taskboard-burndown: renamed db-table 'burndown' to 'initburndown'
+      - taskboard-column: renamed type to mark as column with cards to calculate burndown
+        'type' to 'coltype' as 'type' is reserved column-name
+    - taskboard: added convenience function to send success-message
+
 2010-05-05  jug  <taskboard@jens-gaspar.de>
 
     # 09:32
@@ -10,7 +39,7 @@
     - taskboard-column: added type to mark as column with cards to calculate burndown
     - taskboard: added burndown-table to track sprint-burndown of taskboard
       with dates/capacity/slack and PO & team commitment
-    - taskboard: added burnhours-table to track burned hours of taskboard with date
+    - taskboard: added burnedhours-table to track burned hours of taskboard with date
 
     * app/controllers/taskboard_controller.rb (TaskboardController.copy_row):
     - fix bug on taskboard: used wrong column-reference to copy cards from src-row to target-row

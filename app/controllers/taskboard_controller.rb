@@ -18,7 +18,7 @@
 class TaskboardController < JuggernautSyncController
   include ApplicationHelper
 
-  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown"]
+  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown", "get_initburndown"]
 
   def index
     redirect_to :controller => 'project', :action => 'index'
@@ -165,7 +165,7 @@ class TaskboardController < JuggernautSyncController
     cmap = [] # src-col-pos => trg-col-id
     max_colpos = 0
     trg_cols = Column.all( :conditions => { :taskboard_id => trg_row.taskboard_id },
-                            :order => "position" )
+                           :order => "position" )
     trg_cols.each { |col|
       cmap[col.position] = col.id
       if col.position > max_colpos
@@ -173,7 +173,7 @@ class TaskboardController < JuggernautSyncController
       end
     }
     src_cols = Column.all( :conditions => { :taskboard_id => src_row.taskboard_id },
-                            :order => "position" )
+                           :order => "position" )
     src_cols.each { |col|
       if col.position > max_colpos
         cmap[col.position] = cmap[max_colpos]
@@ -194,7 +194,7 @@ class TaskboardController < JuggernautSyncController
     }
 
     if updated_cards.empty?
-      render :text => "{ status : 'success' }"
+      send_success
     else
       render :json => sync_copy_row(trg_row, updated_cards)
     end
@@ -247,7 +247,7 @@ class TaskboardController < JuggernautSyncController
       }
 
       if updated_cards.empty?
-        render :text => "{ status : 'success' }"
+        send_success
       else
         render :json => sync_add_cards(updated_cards)
       end
@@ -303,6 +303,25 @@ class TaskboardController < JuggernautSyncController
     render :text => burndown(taskboard)
   end
 
+  def get_initburndown
+    taskboard_id = params[:id].to_i
+    initburndown = create_initburndown(taskboard_id)
+    render :json => initburndown.to_json
+  end
+
+  def update_initburndown
+    taskboard_id = params[:taskboard_id].to_i
+
+    initburndown = create_initburndown(taskboard_id)
+    initburndown.capacity = params[:capacity].to_i
+    initburndown.slack = params[:slack].to_i
+    initburndown.commitment_po = params[:commitment_po].to_i
+    initburndown.commitment_team = params[:commitment_team].to_i
+    initburndown.save!
+
+    send_success "Burndown setup updated!"
+  end
+
   private
 
     def insert_column taskboard_id, name = Column::DEFAULT_NAME, position = 1
@@ -318,6 +337,23 @@ class TaskboardController < JuggernautSyncController
       row.save!
       row.insert_at(position)
       return row
+    end
+
+    def create_initburndown taskboard_id
+      if Initburndown.exists?(:taskboard_id => taskboard_id)
+        initburndown = Initburndown.find_by_taskboard_id(taskboard_id)
+      else
+        initburndown = Initburndown.new(:taskboard_id => taskboard_id, :dates => "")
+      end
+      initburndown
+    end
+
+    def send_success message = ''
+      if message.empty?
+        render :text => "{ status : 'success' }"
+      else
+        render :text => "{ status : 'success', message: #{message.to_json} }"
+      end
     end
 
     def send_error message = 'Error!'
