@@ -666,6 +666,12 @@ TASKBOARD.form = {
         },
 
         initBurndown : function(){
+            var dates_str = $('#inputBurndownDates').val().trim() + " ";
+            if(dates_str.length > 0 && !dates_str.match(/^((0?[1-9]|[12]\d|3[01])\.(0?[1-9]|[12]\d|3[01])\.(2\d{3})?\s+)+$/)){
+                $('#inputBurndownDates').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
+
             var cols_arr = []; // col.id, 0|1 (=coltype)
             $('#selectBurndownCols option').each(function() {
                 cols_arr.push( $(this).val() );
@@ -693,7 +699,7 @@ TASKBOARD.form = {
                 return false;
             }
 
-            TASKBOARD.remote.api.updateInitBurndown(cols_arr.join(' '), capacity, slack, commit_po, commit_team);
+            TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), capacity, slack, commit_po, commit_team);
             TASKBOARD.form.close();
             return false;
         }
@@ -1571,9 +1577,10 @@ TASKBOARD.remote = {
         changeCardColor : function(cardId, color){
             TASKBOARD.remote.callback('/card/change_color/', { id: cardId, color : color });
         },
-        updateInitBurndown : function(cols_arr, capacity, slack, commit_po, commit_team){ // remote
+        updateInitBurndown : function(dates_str, cols_arr, capacity, slack, commit_po, commit_team){ // remote
             TASKBOARD.remote.callback("/taskboard/update_initburndown",
-                    { taskboard_id : TASKBOARD.id, cols_arr : cols_arr, capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
+                    { taskboard_id : TASKBOARD.id, dates : dates_str, cols_arr : cols_arr,
+                      capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
         }
     }
 };

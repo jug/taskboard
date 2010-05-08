@@ -311,8 +311,22 @@ class TaskboardController < JuggernautSyncController
 
   def update_initburndown
     taskboard_id = params[:taskboard_id].to_i
-
     after = ''
+
+    dates_trg = []
+    dates_arr = params[:dates].strip.split(/\s+/)
+    dates_arr.each { |date_str|
+      match_data = /^(\d\d?)\.(\d\d?)\.(\d{4})?$/.match( date_str )
+      date_year = match_data[3].to_i
+      if date_year == 0
+        date_year = Time.now.year.to_i
+      end
+      date_chk = "%02d.%02d.%04d" % [ match_data[1].to_i, match_data[2].to_i, date_year ]
+      if dates_trg.index( date_chk ).nil?
+        dates_trg.push( date_chk )
+      end
+    }
+
     cols_arr = params[:cols_arr].split(' ')
     cols_updarr = []
     i = 0
@@ -330,6 +344,7 @@ class TaskboardController < JuggernautSyncController
     end
 
     initburndown = create_initburndown(taskboard_id)
+    initburndown.dates = dates_trg.join(' ')
     initburndown.capacity = params[:capacity].to_i
     initburndown.slack = params[:slack].to_i
     initburndown.commitment_po = params[:commitment_po].to_i
