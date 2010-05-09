@@ -1,4 +1,22 @@
 
+2010-05-09  jug  <taskboard@jens-gaspar.de>
+
+    # 14:40
+    * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown; TASKBOARD.form.updateInitBurndown,
+        ~.updateFixBurndown; TASKBOARD.api.updateFixBurndown; TASKBOARD.remote.api.updateInitBurndown).
+      app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown, ~.get_fixburndown,
+        ~.get_initburndown_hours, ~.update_fixburndown, ~.find_in_array).
+      app/models/initburndown.rb (Initburndown.clone, ~.duetime_as_str, ~.to_json).
+      app/models/taskboard.rb (Taskboard, ~.update_burnedhours, ~.to_json).
+      app/views/taskboard/show.html.erb (actionInitBurndown, actionFixBurndown, inputBurndownDuetime).
+      db/migrate/20100508233100_add_duetime_to_initburndowns.rb (AddDuetimeToInitburndowns).
+      db/schema.rb (Schema):
+    - taskboard-burndown: added due-time, which is normally time of daily-meeting
+      - taskboard-burndown: book burned-hours on next day if due-time is reached, default 13:00
+      - taskboard-burndown: keep sprint-dates sorted
+      - taskboard-burndown: added field in db-table initburndowns.duetime
+      - bugfixes find_in_array(), minor text-changes
+
 2010-05-08  jug  <taskboard@jens-gaspar.de>
 
     # 23:16

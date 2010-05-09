@@ -50,8 +50,8 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
             <li><a class="actionToggleAll" href="#" title="Zoom cards view">Zoom</a></li>
             <li><a class="actionShowBurndown" href="#" title="Show burndown chart for this taskboard">Burndown</a></li>
             <% if session[:editor] -%>
-            <li><a class="actionInitBurndown" href="#" title="Setup burndown for this taskboard">Setup Burndown</a></li>
-            <li><a class="actionFixBurndown" href="#" title="Fix burndown for this taskboard">Fix Burndown</a></li>
+            <li><a class="actionInitBurndown" href="#" title="Setup burndown for this taskboard">Setup</a></li>
+            <li><a class="actionFixBurndown" href="#" title="Fix burndown for this taskboard">Fix</a></li>
             <% end -%>
             <li class="user"><%= render :partial => "login/user_meta" %></li>
         </ul>
@@ -82,6 +82,10 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
                   <tr class="text">
                      <td class="label" colspan="2">Dates (Format: <tt>DD.MM. DD.MM.[YYYY] ...</tt>)<br/>
                           <textarea id="inputBurndownDates" cols="55" rows="4"></textarea></td>
+                  </tr>
+                  <tr>
+                     <td><input id="inputBurndownDuetime" type="text" size="5" maxlength="5" /></td>
+                     <td class="label">Due Time (for burndown day-switch)</td>
                   </tr>
                   <tr>
                      <td class="label" colspan="2">Burndown columns (multiple selection possible):<br/>

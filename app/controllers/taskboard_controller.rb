@@ -379,7 +379,9 @@ class TaskboardController < JuggernautSyncController
     taskboard_id = params[:taskboard_id].to_i
     after = ''
 
+    # parse .dates + date-sort
     dates_trg = []
+    dates_trg_sort = {} # secs => DD.MM.YYYY
     dates_arr = params[:dates].strip.split(/\s+/)
     dates_arr.each { |date_str|
       match_data = /^(\d\d?)\.(\d\d?)\.(\d{4})?$/.match( date_str )
@@ -390,9 +392,16 @@ class TaskboardController < JuggernautSyncController
       date_chk = "%02d.%02d.%04d" % [ match_data[1].to_i, match_data[2].to_i, date_year ]
       if dates_trg.index( date_chk ).nil?
         dates_trg.push( date_chk )
+        date_i = Time.mktime( date_year, match_data[2].to_i, match_data[1].to_i, 0, 0, 0, 0).to_i
+        dates_trg_sort[date_i] = date_chk
       end
     }
+    dates_trg_sorted = []
+    dates_trg_sort.keys.sort.each { |date_i|
+      dates_trg_sorted.push dates_trg_sort[date_i]
+    }
 
+    # parse columns.coltype
     cols_arr = params[:cols_arr].split(' ')
     cols_updarr = []
     i = 0
@@ -409,8 +418,19 @@ class TaskboardController < JuggernautSyncController
       column.save!
     end
 
+    # parse .duetime
+    match_data = /^(\d?\d):(\d\d)$/.match( params[:duetime] )
+    dt_hour = match_data[1].to_i
+    dt_min = match_data[2].to_i
+    if dt_hour >=0 and dt_hour <= 23 and dt_min >= 0 and dt_min <= 59
+      duetime = ( dt_hour * 60 + dt_min ) * 60
+    else
+      duetime = nil
+    end
+
     initburndown = create_initburndown(taskboard_id)
-    initburndown.dates = dates_trg.join(' ')
+    initburndown.dates = dates_trg_sorted.join(' '); # must be date-sorted
+    initburndown.duetime = duetime unless duetime.nil?
     initburndown.capacity = params[:capacity].to_i
     initburndown.slack = params[:slack].to_i
     initburndown.commitment_po = params[:commitment_po].to_i
@@ -427,20 +447,21 @@ class TaskboardController < JuggernautSyncController
 
     result = {}
     result['capacity'] = initburndown.capacity
-    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates )
+    result['duetime_as_str'] = initburndown.duetime_as_str
+    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates, initburndown.duetime )
 
     render :json => result.to_json
   end
 
   # returns: [ [ 'YYYY-MM-DD', hours, secs ], ... ]
-  def get_initburndown_hours taskboard, dates_str
-    dates_arr = []; # initburndown.dates in secs, ...
-    dates_map = {}; # dates_arr[x] => dd.mm.yyyy
+  def get_initburndown_hours taskboard, dates_str, duetime_secs
+    dates_arr = []; # initburndown.dates as secs-array
+    dates_map = {}; # dates_arr[secs] => dd.mm.yyyy
     hours_map = {}; # dd.mm.yyyy (for initburndown.dates) => hours
 
-    # read Initburndown.dates
+    # read Initburndown.dates (expecting to be sorted)
     dates_str.split(' ').each { |date|
-      match_data = /^(\d+)\.(\d+)\.(\d+)$/.match( date )
+      match_data = /^(\d+)\.(\d+)\.(\d+)$/.match( date ) # DD.MM.YYYY
       date_s = sprintf( "%04d-%02d-%02d", match_data[3].to_i, match_data[2].to_i, match_data[1].to_i )
       date_i = make_time( date_s )
       dates_arr.push( date_i )
@@ -457,6 +478,7 @@ class TaskboardController < JuggernautSyncController
       end
     }
 
+    # build and sort result (using sorted dates_arr)
     result_arr = []
     dates_arr.each { |date_i|
       date_s = dates_map[date_i]
@@ -471,7 +493,7 @@ class TaskboardController < JuggernautSyncController
     date_str = params[:date_str]
     update_hours = params[:hours]
     update_time = make_time_from_str( date_str )
-    taskboard.update_burnedhours( update_hours.to_i, update_time )
+    taskboard.update_burnedhours( update_hours.to_i, update_time, false )
 
     render :json => sync_update_fixburndown( taskboard.id, date_str, { :after => date_str + ":" + update_hours.to_s } )
   end
@@ -506,8 +528,8 @@ class TaskboardController < JuggernautSyncController
       return nil if haystack.nil? or haystack.length == 0
       return haystack.first if needle < haystack.first
 
-      for i in 0 ... haystack.length - 1
-        return haystack[i] if haystack[i] <= needle and needle < haystack[i+1]
+      for i in 1 .. haystack.length - 1
+        return haystack[i-1] if haystack[i-1] <= needle and needle < haystack[i]
       end
 
       return haystack.last

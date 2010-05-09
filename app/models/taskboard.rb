@@ -26,7 +26,7 @@ class Taskboard < ActiveRecord::Base
   has_many :rows, :order => "position"
   has_many :burnedhours, :order => "date"
 
-  #has_one :initburndown, :dependent => :destroy
+  has_one :initburndown, :dependent => :destroy
 
   DEFAULT_NAME = "Brand new taskboard"
 
@@ -71,27 +71,21 @@ class Taskboard < ActiveRecord::Base
     return burndown
   end
 
-  def update_burnedhours hours, added_at = Time.now
+  def update_burnedhours hours, added_at = Time.now, use_duetime = true
+    chktime_at = added_at
+    if use_duetime and not initburndown.nil? and initburndown.duetime > 0
+      chktime_at = Time.at( chktime_at.to_i + 24*60*60 - initburndown.duetime )
+    end
+
     burnedhour = self.burnedhours.sort{|x,y| y.date <=> x.date }.select {|h|
-      h.date.beginning_of_day <= added_at && h.date.end_of_day >= added_at
+      h.date.beginning_of_day <= chktime_at && h.date.end_of_day >= chktime_at
     }[0]
     if burnedhour.nil?
-      self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => added_at, :hours => hours )
+      self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => chktime_at, :hours => hours )
       self.save
     else
       Burnedhour.update_counters burnedhour.id, :hours => hours
     end
-  end
-
-  def to_json options = {}
-    options[:except] = [:created_at, :updated_at, :taskboard_id]
-    options[:except] << :url if url.nil?
-    options[:except] << :issue_no if issue_no.nil?
-    options[:methods] = []
-    options[:methods] << :tag_list
-    options[:methods] << :hours_left
-    options[:methods] << :hours_left_updated
-    super(options)
   end
 
   def to_json options = {}

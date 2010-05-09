@@ -678,6 +678,11 @@ TASKBOARD.form = {
                 cols_arr.push( ($(this).attr('selected')) ? 1 : 0 );
             });
 
+            var duetime = $('#inputBurndownDuetime').val().trim();
+            if(duetime.length > 0 && !duetime.match(/^\d?\d:\d\d$/)){
+                $('#inputBurndownDuetime').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
             var capacity = $('#inputBurndownCapacity').val().trim();
             if(capacity.length > 0 && !capacity.match(/^[0-9]+$/)){
                 $('#inputBurndownCapacity').effect("highlight", { color: "#FF0000" }).focus();
@@ -699,7 +704,7 @@ TASKBOARD.form = {
                 return false;
             }
 
-            TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), capacity, slack, commit_po, commit_team);
+            TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), duetime, capacity, slack, commit_po, commit_team);
             TASKBOARD.form.close();
             return false;
         },
@@ -791,6 +796,7 @@ TASKBOARD.form = {
 
         if(initburndown){
             $("#inputBurndownDates").val(initburndown.dates);
+            $("#inputBurndownDuetime").val(initburndown.duetime_as_str)
             $("#inputBurndownCapacity").val(initburndown.capacity);
             $("#inputBurndownSlack").val(initburndown.slack);
             $("#inputBurndownCommitmentPO").val(initburndown.commitment_po);
@@ -804,13 +810,15 @@ TASKBOARD.form = {
         $('#inputFixBurndownDate').val('');
         $('#inputFixBurndownHours').val('');
 
+        var duetime = data.duetime_as_str;
         var hours_arr = data.hours;
         $('#fieldsetFixBurndown #fixTable tr.date').remove();
         for( i=0; i < hours_arr.length; i++ ){
             var date_str = hours_arr[i][0];
             var hours = hours_arr[i][1];
             capa -= hours;
-            row_td = $.tag("td", $.tag("a", date_str, { className: 'editdate', title: "Edit hours", href: '#' })); //date-str
+            a_date = $.tag("a", date_str, { className: 'editdate', title: "Edit hours", href: '#' }); // text must be date-str YYYY-MM-DD
+            row_td = $.tag("td", "&lt; " + a_date + " " + duetime); //date-str
             row_td += $.tag("td", hours);
             row_td += $.tag("td", capa);
             tablerow = $.tag("tr", row_td, { className : 'date' });
@@ -1045,10 +1053,10 @@ TASKBOARD.api = {
     },
 
     /*
-     * Updates taskboard after fixing burndown (reopen fix-burndown dialog).
+     * Updates taskboard after fixing burndown.
      */
     updateFixBurndown : function(){ // api
-        $('#headerBar a.actionFixBurndown').click(); // simul-click
+        // no action so far
     }
 };
 
@@ -1644,9 +1652,9 @@ TASKBOARD.remote = {
         changeCardColor : function(cardId, color){
             TASKBOARD.remote.callback('/card/change_color/', { id: cardId, color : color });
         },
-        updateInitBurndown : function(dates_str, cols_arr, capacity, slack, commit_po, commit_team){ // remote
+        updateInitBurndown : function(dates_str, cols_arr, duetime, capacity, slack, commit_po, commit_team){ // remote
             TASKBOARD.remote.callback("/taskboard/update_initburndown",
-                    { taskboard_id : TASKBOARD.id, dates : dates_str, cols_arr : cols_arr,
+                    { taskboard_id : TASKBOARD.id, dates : dates_str, cols_arr : cols_arr, duetime : duetime,
                       capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
         },
         updateFixBurndown : function(date_str, hour_str){ // remote
