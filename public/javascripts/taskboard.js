@@ -1224,6 +1224,24 @@ TASKBOARD.loadFromJSON = function(taskboard){
 TASKBOARD.burndown = {};
 
 TASKBOARD.burndown.options = {
+    series: {
+        lines: {
+            show: true,
+            lineWidth: 1,
+            steps: false
+        },
+        points: {
+            show: true,
+            lineWidth: 1,
+            radius: 5
+        },
+        shadowSize: 0
+    },
+    // colors: 0=Hours, 1=PO-Commit, 2=Team-Commit, 3=Slack, 5=Velocity, 6=Text
+    colors : [ '#cc0044', '#ff6633', '#33cc33', '#3399ff', '#6600ff', '#000000' ],
+    grid : { backgroundColor: 'white' }
+
+    /* original burndown options
     xaxis: {
         mode: "time",
         timeformat: "%d-%b",
@@ -1236,9 +1254,98 @@ TASKBOARD.burndown.options = {
         align: 'center'
     },
     grid : { backgroundColor: 'white' }
+    */
 };
 
 TASKBOARD.burndown.render = function(element, data){
+    // data = { initburndown => , data => [ [x,y], ...]
+    var self = TASKBOARD;
+    var plotdata = []
+
+    // series: 0=Hours, 1=PO-Commit, 2=Team-Commit, 3=Slack, 5=Velocity, 6=Text
+    var series
+
+    // 0-axis
+    series = {
+        color: 5,
+        data: [ [1,0], [16,0] ], // x-axis
+        lines: {
+            show: true,
+            lineWidth: 2,
+            shadowSize: 0
+        }
+    };
+    plotdata.push( series );
+
+    // PO-commit
+    series = {
+        color: 1,
+        data: [ [1,200], [15,60] ],
+        label: "PO-Commitment",
+        lines: { show: true }
+    };
+    plotdata.push( series );
+
+    // Team-commit
+    series = {
+        color: 2,
+        data: [ [1,200], [15,-30] ],
+        label: "Team-Commitment",
+        lines: { show: true }
+    };
+    plotdata.push( series );
+
+    // hours
+    series = {
+        color: 0,
+        data: [],
+        label: "Burndown [h]",
+        lines: {
+            show: true
+        },
+        points: {
+            show: true,
+            fill: false,
+            radius: 3
+        }
+    };
+    series['data'].push( [1,200], [2,200], [3,190], [4,185], [5,170], [6,140] );
+    plotdata.push( series );
+
+    // Slack
+    series = {
+        color: 3,
+        data: [ [15,-20] ],
+        label: "Slack",
+        points: {
+            show: true,
+            fill: true,
+            fillColor: false,
+            radius: 5
+        }
+    };
+    plotdata.push( series );
+
+    var options = {
+        // colors: 0=Hours, 1=PO-Commit, 2=Team-Commit, 3=Slack, 4=Velocity, 5=Text
+        colors: [ '#cc0044', '#ff9966', '#33cc33', '#3399ff', '#6600ff', '#000000' ],
+        legend: {
+            position: 'ne'
+        },
+        xaxis: {
+            min: 1,
+            max: 16, // +1
+            ticks: [              [1,"4.5.<br>200"],  [2,"5.5."],  [3,"6.5."],  [4,"7.5."],
+                        [5,"10.5."], [6,"11.5."], [7,"12.5."], [8,"13.5."], [9,"14.5."],
+                        [10,"17.5."], [11,"18.5."], [12,"19.5."], [13,"20.5."], [14,"21.5."],
+                        [15,"24.5."], [16,""] ]
+        },
+        //yaxis: {},
+        grid: { backgroundColor: 'white' }
+    };
+    $.plot(element, plotdata, options);
+
+    /* original burndown rendering
     if(!data.length){
         var date = new Date();
         date.setMilliseconds(0); date.setSeconds(0); date.setMinutes(0); date.setHours(0);
@@ -1249,9 +1356,38 @@ TASKBOARD.burndown.render = function(element, data){
         max: data[data.length - 1][0] + ((data.length < 10 ? 10 - data.length : 0) * 24 + 16) * 60 * 60 * 1000
     });
     $.plot(element, [data], TASKBOARD.burndown.options);
+    */
 };
 
 TASKBOARD.showBurndown = function(ev){
+    ev.preventDefault();
+    var self = TASKBOARD;
+    TASKBOARD.remote.get.taskboardBurndown2(self.id, function(data){
+        if(!$('#burndown').exists()){
+            $('body').append('<div id="burndown"></div>');
+        }
+
+        // div must have height and width to plot
+        $("#burndown").css({ height: '700px', width : '900px' });
+        $("#burndown").show();
+
+        TASKBOARD.burndown.render($('#burndown'), data);
+        $("#burndown").openOverlay({
+            height: '700px',
+            width : '900px',
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            marginTop: '-350px',
+            marginLeft:'-450px',
+            backgroundColor: 'white',
+            border: '1px solid #CCCCCC',
+            borderRadius: '20px',
+            zIndex: 1001
+        });
+    });
+
+    /* original burndown-showing
     ev.preventDefault();
     var self = TASKBOARD;
     TASKBOARD.remote.get.taskboardBurndown(self.id, function(data){
@@ -1278,8 +1414,8 @@ TASKBOARD.showBurndown = function(ev){
             borderRadius: '20px',
             zIndex: 1001
         });
-
     });
+    */
 };
 
 
@@ -1572,6 +1708,13 @@ TASKBOARD.remote = {
         },
         taskboardFixBurndown: function(id, callback){
             $.getJSON("/taskboard/get_fixburndown/" + id, function(data){
+                callback(data);
+                TASKBOARD.remote.loading.stop();
+            });
+        },
+        taskboardBurndown2: function(id, callback){
+            TASKBOARD.remote.loading.start();
+            $.getJSON('/taskboard/load_burndown2/' + id, function(data){
                 callback(data);
                 TASKBOARD.remote.loading.stop();
             });

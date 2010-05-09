@@ -18,7 +18,7 @@
 class TaskboardController < JuggernautSyncController
   include ApplicationHelper
 
-  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown", "get_initburndown", "get_fixburndown"]
+  before_filter :authorize_read_only, :except => ["show", "index", "get_taskboard", "load_burndown", "get_initburndown", "get_fixburndown", "load_burndown2"]
 
   def index
     redirect_to :controller => 'project', :action => 'index'
@@ -369,6 +369,24 @@ class TaskboardController < JuggernautSyncController
     render :text => burndown(taskboard)
   end
 
+  # result: { initburndown => .., data => [ [ x_label, hours ], ...] }
+  def load_burndown2
+    taskboard = Taskboard.find(params[:id].to_i)
+    hours_arr = get_initburndown_hours( taskboard, taskboard.initburndown.dates )
+
+    data_arr = []
+    hours_arr.each { |data_arr|
+      time_label = "%d.%d." % [ data_arr[0][5..6].to_i, data_arr[0][8..9].to_i ]
+      data_arr.push [ time_label, data_arr[1] ]
+    }
+
+    result = {}
+    result['initburndown'] = taskboard.initburndown
+    result['data'] = data_arr
+
+    render :json => result.to_json
+  end
+
   def get_initburndown
     taskboard_id = params[:id].to_i
     initburndown = create_initburndown(taskboard_id)
@@ -448,13 +466,13 @@ class TaskboardController < JuggernautSyncController
     result = {}
     result['capacity'] = initburndown.capacity
     result['duetime_as_str'] = initburndown.duetime_as_str
-    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates, initburndown.duetime )
+    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates )
 
     render :json => result.to_json
   end
 
   # returns: [ [ 'YYYY-MM-DD', hours, secs ], ... ]
-  def get_initburndown_hours taskboard, dates_str, duetime_secs
+  def get_initburndown_hours taskboard, dates_str
     dates_arr = []; # initburndown.dates as secs-array
     dates_map = {}; # dates_arr[secs] => dd.mm.yyyy
     hours_map = {}; # dd.mm.yyyy (for initburndown.dates) => hours

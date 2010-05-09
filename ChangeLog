@@ -1,4 +1,17 @@
 
+2010-05-10  jug  <taskboard@jens-gaspar.de>
+
+    # 02:05
+    * public/javascripts/taskboard.js (TASKBOARD.burndown.options; TASKBOARD.burndown.render;
+        TASKBOARD.showBurndown; TASKBOARD.remote.api.taskboardBurndown2),
+      app/controllers/taskboard_controller.rb (TaskboardController, ~.load_burndown2,
+        ~.get_fixburndown, ~.get_initburndown_hours):
+    - taskboard-burndown: replaced original taskboard-burndown with new larger burndown-diagram
+      showing burned-hours
+      - taskboard: show new larger burndown-diagram with lines & text representing
+        Hours/PO-Commit/Team-Commit/Slack/Velocity for each day
+      - taskboard-burndown: commented out ogirinal burndown-chart
+
 2010-05-09  jug  <taskboard@jens-gaspar.de>
 
     # 14:40
