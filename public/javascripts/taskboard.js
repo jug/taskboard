@@ -704,8 +704,13 @@ TASKBOARD.form = {
                 $('#inputBurndownCommitmentTeam').effect("highlight", { color: "#FF0000" }).focus();
                 return false;
             }
+            var velocity = $('#inputBurndownVelocity').val().trim();
+            if(velocity.length > 0 && !velocity.match(/^[1-9]\d*(\.\d+)?%?$/)){
+                $('#inputBurndownVelocity').effect("highlight", { color: "#FF0000" }).focus();
+                return false;
+            }
 
-            TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), duetime, capacity, slack, commit_po, commit_team);
+            TASKBOARD.remote.api.updateInitBurndown(dates_str, cols_arr.join(' '), duetime, capacity, slack, commit_po, commit_team, velocity);
             TASKBOARD.form.close();
             return false;
         },
@@ -802,6 +807,7 @@ TASKBOARD.form = {
             $("#inputBurndownSlack").val(initburndown.slack);
             $("#inputBurndownCommitmentPO").val(initburndown.commitment_po);
             $("#inputBurndownCommitmentTeam").val(initburndown.commitment_team);
+            $("#inputBurndownVelocity").val(TASKBOARD.formatVelocity(initburndown.velocity));
         }
     },
 
@@ -1243,9 +1249,10 @@ TASKBOARD.burndown.options = {
 
 TASKBOARD.burndown.render = function(element, data){
     // data = { initburndown => , count => , data => [ [x,y], ...]
+    var self = TASKBOARD;
     var initburndown = data.initburndown.initburndown;
     var capacity = initburndown.capacity;
-    var velocity = 5000; //TODO initburndown.velocity;
+    var velocity = initburndown.velocity;
     var plotdata = [];
     var cnt_entries = data['count'];
     var hours = data['data'];
@@ -1304,7 +1311,7 @@ TASKBOARD.burndown.render = function(element, data){
         }
     };
     plotdata.push( series );
-    var velocity_new = currHours / capacity * velocity;
+    var velocity_new = (capacity > 0) ? velocity * (capacity - currHours) / capacity : velocity;
 
     // series: Slack
     var y_slack = capacity - initburndown.slack;
@@ -1329,7 +1336,7 @@ TASKBOARD.burndown.render = function(element, data){
         },
         xaxis: {
             min: 1,
-            max: cnt_days + 0.5,
+            max: cnt_days + 1,
             ticks: [],
         },
         yaxis: {
@@ -1349,14 +1356,14 @@ TASKBOARD.burndown.render = function(element, data){
     var plot = $.plot(element, plotdata, options);
 
     // annotations
-    element.append('<div style="position:absolute;left:450px;top:15px;text-align:center"><h2>' + TASKBOARD.data.name.escapeHTML() + '</h2></div>');
+    element.append('<div style="position:absolute;left:450px;top:15px;text-align:center"><h2>' + self.data.name.escapeHTML() + '</h2></div>');
     o = plot.pointOffset({ x: cnt_days, y: y_commitment_po }); // PO-commit
     element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_commitment_po + '</div>');
     o = plot.pointOffset({ x: cnt_days, y: y_commitment_team }); // Team-commit
     element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_commitment_team + '</div>');
     o = plot.pointOffset({ x: cnt_days, y: y_slack }); // slack
     element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_slack + '</div>');
-    notes = "Capacity: " + capacity + "<br>Velocity: 0." + (velocity/100) + "% (NEW 0." + (velocity_new/100) + "%)";
+    notes = "Capacity: " + capacity + "<br>Velocity: " + self.formatVelocity(velocity) + " (NEW " + self.formatVelocity(velocity_new) + ")";
     o = plot.pointOffset({ x: 1, y: 0 }); // at 0/0: capacity + velocity
     element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 40) + 'px;font-size:80%">' + notes + '</div>');
 
@@ -1810,10 +1817,10 @@ TASKBOARD.remote = {
         changeCardColor : function(cardId, color){
             TASKBOARD.remote.callback('/card/change_color/', { id: cardId, color : color });
         },
-        updateInitBurndown : function(dates_str, cols_arr, duetime, capacity, slack, commit_po, commit_team){ // remote
+        updateInitBurndown : function(dates_str, cols_arr, duetime, capacity, slack, commit_po, commit_team, velocity){ // remote
             TASKBOARD.remote.callback("/taskboard/update_initburndown",
                     { taskboard_id : TASKBOARD.id, dates : dates_str, cols_arr : cols_arr, duetime : duetime,
-                      capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team });
+                      capacity : capacity, slack : slack, commitment_po : commit_po, commitment_team : commit_team, velocity : velocity });
         },
         updateFixBurndown : function(date_str, hour_str){ // remote
             TASKBOARD.remote.callback("/taskboard/update_fixburndown",
@@ -1937,7 +1944,9 @@ TASKBOARD.dumpProps = function( obj, parent ) {
     alert(msg);
 };
 
-
+TASKBOARD.formatVelocity = function( velocity ){ // velocity = %-value * 100
+    return (Math.round(velocity) / 100) + "%";
+};
 
 })(jQuery); // just to make sure $ was a jQuery
 

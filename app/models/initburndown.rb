@@ -6,7 +6,8 @@ class Initburndown < ActiveRecord::Base
     Initburndown.new( :taskboard_id => taskboard_id,
          :dates => dates, :duetime => duetime,
          :capacity => capacity, :slack => slack,
-         :commitment_po => commitment_po, :commitment_team => commitment_team)
+         :commitment_po => commitment_po, :commitment_team => commitment_team,
+         :velocity => velocity )
   end
 
   def duetime_as_str

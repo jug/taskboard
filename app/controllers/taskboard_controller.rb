@@ -372,19 +372,26 @@ class TaskboardController < JuggernautSyncController
   # result: { initburndown => .., count => n, data => [ [ x_label, hours ], ...] }
   def load_burndown2
     taskboard = Taskboard.find(params[:id].to_i)
-    hours_map = get_initburndown_hours( taskboard, taskboard.initburndown.dates )
-    hours_arr = hours_map['hours']
-
-    data_arr = []
-    hours_arr.each { |item_arr|
-      time_label = "%d.%d." % [ item_arr[0][8..9].to_i, item_arr[0][5..6].to_i ]
-      data_arr.push [ time_label, item_arr[1] ]
-    }
-
     result = {}
-    result['initburndown'] = taskboard.initburndown
-    result['count'] = hours_map['count']
-    result['data'] = data_arr
+
+    if not taskboard.initburndown.nil?
+      hours_map = get_initburndown_hours( taskboard, taskboard.initburndown.dates )
+      hours_arr = hours_map['hours']
+
+      data_arr = []
+      hours_arr.each { |item_arr|
+        time_label = "%d.%d." % [ item_arr[0][8..9].to_i, item_arr[0][5..6].to_i ]
+        data_arr.push [ time_label, item_arr[1] ]
+      }
+
+      result['initburndown'] = taskboard.initburndown
+      result['count'] = hours_map['count']
+      result['data'] = data_arr
+    else
+      result['initburndown'] = create_initburndown(taskboard.id)
+      result['count'] = 0
+      result['data'] = []
+    end
 
     render :json => result.to_json
   end
@@ -448,6 +455,10 @@ class TaskboardController < JuggernautSyncController
       duetime = nil
     end
 
+    # parse velocity
+    match_data = /^((\d+)(\.\d+)?)%?$/.match( params[:velocity] )
+    velocity = (match_data[1].to_f * 100).to_i
+
     initburndown = create_initburndown(taskboard_id)
     initburndown.dates = dates_trg_sorted.join(' '); # must be date-sorted
     initburndown.duetime = duetime unless duetime.nil?
@@ -455,6 +466,7 @@ class TaskboardController < JuggernautSyncController
     initburndown.slack = params[:slack].to_i
     initburndown.commitment_po = params[:commitment_po].to_i
     initburndown.commitment_team = params[:commitment_team].to_i
+    initburndown.velocity = velocity
     initburndown.save!
 
     render :json => sync_update_initburndown( taskboard_id, cols_updarr.join(' '), { :after => after } )

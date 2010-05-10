@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100508233100) do
+ActiveRecord::Schema.define(:version => 20100510212000) do
 
   create_table "burnedhours", :force => true do |t|
     t.integer "taskboard_id", :null => false
@@ -64,6 +64,7 @@ ActiveRecord::Schema.define(:version => 20100508233100) do
     t.integer "commitment_po",   :default => 0,     :null => false
     t.integer "commitment_team", :default => 0,     :null => false
     t.integer "duetime",         :default => 46800, :null => false
+    t.integer "velocity",        :default => 5000,  :null => false
   end
 
   add_index "initburndowns", ["taskboard_id"], :name => "index_initburndowns_on_taskboard_id"

@@ -1,4 +1,20 @@
 
+2010-05-11  jug  <taskboard@jens-gaspar.de>
+
+    # -1d/21:57 + 13:03
+    * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown;
+        TASKBOARD.form.updateInitBurndown; TASKBOARD.burndown.render;
+        TASKBOARD.remote.api.updateInitBurndown; TASKBOARD.formatVelocity),
+      app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown),
+      app/models/initburndown.rb (Initburndown.clone),
+      app/views/taskboard/show.html.erb (inputBurndownVelocity),
+      db/migrate/20100510212000_add_velocity_to_initburndowns.rb (AddVelocityToInitburndowns),
+      db/schema.rb (Schema):
+    - taskboard-burndown: added velocity for sprint-burndown
+      - taskboard: enter velocity in setup burndown-action-dialog
+      - taskboard: use velocity in burndown-diagram replacing default 50% velocity
+      - taskboard: added db-table-field 'initburndowns.velocity'
+
 2010-05-10  jug  <taskboard@jens-gaspar.de>
 
     # 21:20
