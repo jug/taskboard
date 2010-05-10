@@ -1,6 +1,12 @@
 
 2010-05-10  jug  <taskboard@jens-gaspar.de>
 
+    # 18:08
+    * public/javascripts/taskboard.js (TASKBOARD.burndown.render),
+      public/javascripts/lib/jquery.flot.js:
+    - added axis-values for taskboard-burndown diagram, using gradient white-greyish background
+    - updated plotting library jquery-flot 0.5 to 0.6
+
     # 02:05
     * public/javascripts/taskboard.js (TASKBOARD.burndown.options; TASKBOARD.burndown.render;
         TASKBOARD.showBurndown; TASKBOARD.remote.api.taskboardBurndown2),

@@ -1259,6 +1259,7 @@ TASKBOARD.burndown.options = {
 
 TASKBOARD.burndown.render = function(element, data){
     // data = { initburndown => , data => [ [x,y], ...]
+    var initburndown = data.initburndown.initburndown;
     var self = TASKBOARD;
     var plotdata = []
 
@@ -1341,9 +1342,20 @@ TASKBOARD.burndown.render = function(element, data){
                         [15,"24.5."], [16,""] ]
         },
         //yaxis: {},
-        grid: { backgroundColor: 'white' }
+        grid: {
+            backgroundColor: { colors: [ 'white', '#f2f2f2' ] }
+        }
     };
-    $.plot(element, plotdata, options);
+    var plot = $.plot(element, plotdata, options);
+
+    // annotations
+    element.append('<div style="position:absolute;left:450px;top:15px;text-align:center"><h2>' + self.data.name.escapeHTML() + '</h2></div>');
+    o = plot.pointOffset({ x: 15, y: 60}); // PO-commit
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.commitment_po + '</div>');
+    o = plot.pointOffset({ x: 15, y: -30}); // Team-commit
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.commitment_team + '</div>');
+    o = plot.pointOffset({ x: 15, y: -20}); // slack
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.slack + '</div>');
 
     /* original burndown rendering
     if(!data.length){
