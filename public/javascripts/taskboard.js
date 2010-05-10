@@ -609,9 +609,10 @@ TASKBOARD.builder.buildBigCard = function(card){
         bigCard.find('#progress').editable(function(val){
             if(!isNaN(val) && val >= 0) {
                     TASKBOARD.remote.api.updateCardHours(card.id, val, $(this).find("select").val(), function() {
-                        TASKBOARD.remote.get.cardBurndown(card.id, function(data){
-                            TASKBOARD.burndown.render($('#cardBurndown'), data);
-                        });
+                        // burndown-func overwritten for DomDev
+                        //TASKBOARD.remote.get.cardBurndown(card.id, function(data){
+                            //TASKBOARD.burndown.render($('#cardBurndown'), data);
+                        //});
                     });
                     card.hours_left = val;
                     TASKBOARD.api.updateCard({ card: card }); // redraw small card
@@ -1224,23 +1225,6 @@ TASKBOARD.loadFromJSON = function(taskboard){
 TASKBOARD.burndown = {};
 
 TASKBOARD.burndown.options = {
-    series: {
-        lines: {
-            show: true,
-            lineWidth: 1,
-            steps: false
-        },
-        points: {
-            show: true,
-            lineWidth: 1,
-            radius: 5
-        },
-        shadowSize: 0
-    },
-    // colors: 0=Hours, 1=PO-Commit, 2=Team-Commit, 3=Slack, 5=Velocity, 6=Text
-    colors : [ '#cc0044', '#ff6633', '#33cc33', '#3399ff', '#6600ff', '#000000' ],
-    grid : { backgroundColor: 'white' }
-
     /* original burndown options
     xaxis: {
         mode: "time",
@@ -1258,18 +1242,19 @@ TASKBOARD.burndown.options = {
 };
 
 TASKBOARD.burndown.render = function(element, data){
-    // data = { initburndown => , data => [ [x,y], ...]
+    // data = { initburndown => , count => , data => [ [x,y], ...]
     var initburndown = data.initburndown.initburndown;
-    var self = TASKBOARD;
-    var plotdata = []
+    var capacity = initburndown.capacity;
+    var velocity = 5000; //TODO initburndown.velocity;
+    var plotdata = [];
+    var cnt_entries = data['count'];
+    var hours = data['data'];
+    var cnt_days = hours.length;
 
-    // series: 0=Hours, 1=PO-Commit, 2=Team-Commit, 3=Slack, 5=Velocity, 6=Text
-    var series
-
-    // 0-axis
-    series = {
+    // series: 0-axis
+    var series = {
         color: 5,
-        data: [ [1,0], [16,0] ], // x-axis
+        data: [ [1,0], [cnt_days + 1,0] ], // x-axis
         lines: {
             show: true,
             lineWidth: 2,
@@ -1278,29 +1263,37 @@ TASKBOARD.burndown.render = function(element, data){
     };
     plotdata.push( series );
 
-    // PO-commit
+    // series: PO-commit
+    var y_commitment_po = capacity - initburndown.commitment_po;
     series = {
         color: 1,
-        data: [ [1,200], [15,60] ],
-        label: "PO-Commitment",
+        data: [ [1,capacity], [cnt_days, y_commitment_po] ],
+        label: "PO-Commitment: " + initburndown.commitment_po,
         lines: { show: true }
     };
     plotdata.push( series );
 
-    // Team-commit
+    // series: Team-commit
+    var y_commitment_team = capacity - initburndown.commitment_team;
     series = {
         color: 2,
-        data: [ [1,200], [15,-30] ],
-        label: "Team-Commitment",
+        data: [ [1,capacity], [cnt_days, y_commitment_team] ],
+        label: "Team-Commitment: " + initburndown.commitment_team,
         lines: { show: true }
     };
     plotdata.push( series );
 
-    // hours
+    // series: hours
+    var currHours = capacity;
+    var data_hours = [];
+    for( i=0; i < cnt_entries; i++){
+        currHours -= hours[i][1];
+        data_hours.push( [ i + 1, currHours ] );
+    }
     series = {
         color: 0,
-        data: [],
-        label: "Burndown [h]",
+        data: data_hours,
+        label: "Burndown",
         lines: {
             show: true
         },
@@ -1310,14 +1303,15 @@ TASKBOARD.burndown.render = function(element, data){
             radius: 3
         }
     };
-    series['data'].push( [1,200], [2,200], [3,190], [4,185], [5,170], [6,140] );
     plotdata.push( series );
+    var velocity_new = currHours / capacity * velocity;
 
-    // Slack
+    // series: Slack
+    var y_slack = capacity - initburndown.slack;
     series = {
         color: 3,
-        data: [ [15,-20] ],
-        label: "Slack",
+        data: [ [cnt_days, y_slack] ],
+        label: "Slack: " + initburndown.slack,
         points: {
             show: true,
             fill: true,
@@ -1335,27 +1329,36 @@ TASKBOARD.burndown.render = function(element, data){
         },
         xaxis: {
             min: 1,
-            max: 16, // +1
-            ticks: [              [1,"4.5.<br>200"],  [2,"5.5."],  [3,"6.5."],  [4,"7.5."],
-                        [5,"10.5."], [6,"11.5."], [7,"12.5."], [8,"13.5."], [9,"14.5."],
-                        [10,"17.5."], [11,"18.5."], [12,"19.5."], [13,"20.5."], [14,"21.5."],
-                        [15,"24.5."], [16,""] ]
+            max: cnt_days + 0.5,
+            ticks: [],
         },
-        //yaxis: {},
+        yaxis: {
+            max: capacity + 20
+        },
         grid: {
             backgroundColor: { colors: [ 'white', '#f2f2f2' ] }
         }
     };
+    currHours = capacity;
+    for( i=0; i < cnt_days; i++){
+        currHours -= hours[i][1];
+        date_str = (i == cnt_days - 1) ? "(" + hours[i][0] + ")" : hours[i][0];
+        options.xaxis.ticks.push( [ i + 1, date_str + (i == 0 || i < cnt_entries ? "<br>" + currHours : "") ] );
+    }
+    options.xaxis.ticks.push( [ i, "" ] );
     var plot = $.plot(element, plotdata, options);
 
     // annotations
-    element.append('<div style="position:absolute;left:450px;top:15px;text-align:center"><h2>' + self.data.name.escapeHTML() + '</h2></div>');
-    o = plot.pointOffset({ x: 15, y: 60}); // PO-commit
-    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.commitment_po + '</div>');
-    o = plot.pointOffset({ x: 15, y: -30}); // Team-commit
-    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.commitment_team + '</div>');
-    o = plot.pointOffset({ x: 15, y: -20}); // slack
-    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + initburndown.slack + '</div>');
+    element.append('<div style="position:absolute;left:450px;top:15px;text-align:center"><h2>' + TASKBOARD.data.name.escapeHTML() + '</h2></div>');
+    o = plot.pointOffset({ x: cnt_days, y: y_commitment_po }); // PO-commit
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_commitment_po + '</div>');
+    o = plot.pointOffset({ x: cnt_days, y: y_commitment_team }); // Team-commit
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_commitment_team + '</div>');
+    o = plot.pointOffset({ x: cnt_days, y: y_slack }); // slack
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 8) + 'px;font-size:smaller">' + y_slack + '</div>');
+    notes = "Capacity: " + capacity + "<br>Velocity: 0." + (velocity/100) + "% (NEW 0." + (velocity_new/100) + "%)";
+    o = plot.pointOffset({ x: 1, y: 0 }); // at 0/0: capacity + velocity
+    element.append('<div style="position:absolute;left:' + (o.left + 10) + 'px;top:' + (o.top - 40) + 'px;font-size:80%">' + notes + '</div>');
 
     /* original burndown rendering
     if(!data.length){

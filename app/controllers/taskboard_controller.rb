@@ -369,19 +369,21 @@ class TaskboardController < JuggernautSyncController
     render :text => burndown(taskboard)
   end
 
-  # result: { initburndown => .., data => [ [ x_label, hours ], ...] }
+  # result: { initburndown => .., count => n, data => [ [ x_label, hours ], ...] }
   def load_burndown2
     taskboard = Taskboard.find(params[:id].to_i)
-    hours_arr = get_initburndown_hours( taskboard, taskboard.initburndown.dates )
+    hours_map = get_initburndown_hours( taskboard, taskboard.initburndown.dates )
+    hours_arr = hours_map['hours']
 
     data_arr = []
-    hours_arr.each { |data_arr|
-      time_label = "%d.%d." % [ data_arr[0][5..6].to_i, data_arr[0][8..9].to_i ]
-      data_arr.push [ time_label, data_arr[1] ]
+    hours_arr.each { |item_arr|
+      time_label = "%d.%d." % [ item_arr[0][8..9].to_i, item_arr[0][5..6].to_i ]
+      data_arr.push [ time_label, item_arr[1] ]
     }
 
     result = {}
     result['initburndown'] = taskboard.initburndown
+    result['count'] = hours_map['count']
     result['data'] = data_arr
 
     render :json => result.to_json
@@ -462,22 +464,26 @@ class TaskboardController < JuggernautSyncController
     taskboard_id = params[:id].to_i
     taskboard = Taskboard.find(taskboard_id)
     initburndown = create_initburndown(taskboard_id)
+    hours_map = get_initburndown_hours( taskboard, initburndown.dates )
 
     result = {}
     result['capacity'] = initburndown.capacity
     result['duetime_as_str'] = initburndown.duetime_as_str
-    result['hours'] = get_initburndown_hours( taskboard, initburndown.dates )
+    result['hours'] = hours_map['hours']
 
     render :json => result.to_json
   end
 
-  # returns: [ [ 'YYYY-MM-DD', hours, secs ], ... ]
+  # returns: { count => data-points, hours => [ [ 'YYYY-MM-DD', hours, secs ], ... ] }
   def get_initburndown_hours taskboard, dates_str
     dates_arr = []; # initburndown.dates as secs-array
     dates_map = {}; # dates_arr[secs] => dd.mm.yyyy
     hours_map = {}; # dd.mm.yyyy (for initburndown.dates) => hours
+    count_map = {}; # date.secs => 0|1 (=count-it)
 
     # read Initburndown.dates (expecting to be sorted)
+    cnt_entries = 0
+    time_now = Time.now.to_i
     dates_str.split(' ').each { |date|
       match_data = /^(\d+)\.(\d+)\.(\d+)$/.match( date ) # DD.MM.YYYY
       date_s = sprintf( "%04d-%02d-%02d", match_data[3].to_i, match_data[2].to_i, match_data[1].to_i )
@@ -485,14 +491,17 @@ class TaskboardController < JuggernautSyncController
       dates_arr.push( date_i )
       dates_map[date_i] = date_s
       hours_map[date_s] = 0
+      count_map[date_i] = ( date_i <= time_now )
     }
 
     # read Burnedhours
+    cnt_bhours = 0
     taskboard.burnedhours.sort_by {|bhour| bhour.date}.each { |bhour|
       date_i = find_in_array( dates_arr, make_time_from_date(bhour.date).to_i )
       if not date_i.nil?
         date_s = dates_map[date_i]
         hours_map[date_s] = hours_map[date_s] + bhour.hours
+        count_map[date_i] = true
       end
     }
 
@@ -503,7 +512,12 @@ class TaskboardController < JuggernautSyncController
       result_arr.push [ date_s, hours_map[date_s], date_i ]
     }
 
-    result_arr
+    cnt_entries = ( count_map.values.find_all { |v| v } ).length
+
+    result = {}
+    result['count'] = [ cnt_entries, cnt_bhours ].max
+    result['hours'] = result_arr
+    result
   end
 
   def update_fixburndown
