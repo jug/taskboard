@@ -573,7 +573,8 @@ class TaskboardController < JuggernautSyncController
       return haystack.first if needle < haystack.first
 
       for i in 1 .. haystack.length - 1
-        return haystack[i-1] if haystack[i-1] <= needle and needle < haystack[i]
+        return haystack[i-1] if haystack[i-1] <= needle and needle < haystack[i-1] + 86400
+        return haystack[i] if needle < haystack[i]
       end
 
       return haystack.last
