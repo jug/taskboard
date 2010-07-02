@@ -223,6 +223,10 @@ TASKBOARD.builder.actions = {
         return $.tag("a", "Delete all cards from column", { className : 'cleanRow', title : 'Delete all cards from row', href : '#' });
     },
 
+    cardNotes : function(){
+        return $.tag("a", "Delete all cards from column", { className : 'cleanRow', title : 'Delete all cards from row', href : '#' });
+    },
+
     copyCardAction : function(){
         return $.tag("a", "+", { className : "copyCard", title : "Copy card", href : "#" });
     },
@@ -230,7 +234,14 @@ TASKBOARD.builder.actions = {
     rowActions : function(row){
         var infoRow = $.tag('span', "(" + row.position + ":" + row.id + ")", { className : "RowInfo" });
         return $.tag("a", infoRow, { className : 'rowActions', title : "position:row_id", href : '#' });
-    }
+    },
+
+    foldRow : function(row_id, fold){
+        if( fold )
+            return $.tag("a", "", { id : 'fold_' + row_id, className : 'foldRowExpand', title : 'Expand row', href : '#' });
+        else
+            return $.tag("a", "", { id : 'fold_' + row_id, className : 'foldRowCollapse', title : 'Collapse row', href : '#' });
+    },
 };
 
 /*
@@ -264,9 +275,14 @@ TASKBOARD.builder.buildColumnFromJSON = function(column){
         }
         if(column.cardsMap && column.cardsMap[row.id]){
             $.each(column.cardsMap[row.id].sortByPosition(), function(j, card){
-                cardsOl.append(TASKBOARD.builder.buildCardFromJSON(card));
+                cardElem = TASKBOARD.builder.buildCardFromJSON(card);
+                if(column.position > 1 && row.fold)
+                    cardElem.hide();
+                cardsOl.append(cardElem);
             });
         }
+        if(column.position > 1 && row.fold)
+            cardsOl.addClass("foldedrow");
         columnLi.append(cardsOl);
     });
     var width = TASKBOARD.cookie.getColumnWidth(column.id) ? parseInt(TASKBOARD.cookie.getColumnWidth(column.id), 10) : "";
@@ -319,7 +335,8 @@ TASKBOARD.builder.buildRowMeta = function(row){
     rowDiv = $(rowDiv);
     rowDiv.data("data", row).addClass("row_" + row.id);
     if(TASKBOARD.editor){
-        var actionsRow = $.tag("li", TASKBOARD.builder.actions.deleteRow());
+        var actionFold = TASKBOARD.builder.actions.foldRow(row.id, row.fold);
+        var actionsRow = $.tag("li", TASKBOARD.builder.actions.deleteRow() + actionFold);
         actionsRow += $.tag("li", TASKBOARD.builder.actions.cleanRow());
         rowDiv.append($.tag("ul", actionsRow, { className : 'actions' }));
 
@@ -358,6 +375,8 @@ TASKBOARD.builder.buildRowMeta = function(row){
                 }
             });
 
+        TASKBOARD.bindHandlerFoldRow( rowDiv.find("#fold_" + row.id), row );
+
         rowDiv.find(".rowActions")
             .bind("click", function(ev){
                 TASKBOARD.openRowActions(row, $(this).offset().top - 5, $(this).offset().left + 30);
@@ -366,6 +385,24 @@ TASKBOARD.builder.buildRowMeta = function(row){
             });
     }
     return rowDiv;
+};
+
+TASKBOARD.bindHandlerFoldRow = function(element, row){
+    element.unbind();
+    element.bind("click", function(ev){
+            ev.preventDefault();
+            var cards = $(".column:gt(0) .row_" + row.id).children(); // don't hide 1st col
+            if(cards.length > 0){
+                if(row.fold){
+                    cards.show();
+                    cards.parent("ol").removeClass("foldedrow");
+                } else {
+                    cards.hide();
+                    cards.parent("ol").addClass("foldedrow");
+                }
+                TASKBOARD.remote.api.foldRow(row.id, row.fold);
+            }
+        });
 };
 
 TASKBOARD.builder.buildMetaLane = function(sumHoursMap){
@@ -380,6 +417,7 @@ TASKBOARD.builder.buildMetaLane = function(sumHoursMap){
     });
     return metaLane;
 }
+
 /*
  * Builds a card element from JSON data.
  */
@@ -388,7 +426,9 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
     if(card.issue_no){
         cardLi += $.tag('span', $.tag('a', card.issue_no, { href : card.url, rel : 'external'}) + ": ",   { className : 'alias' });
     }
-    cardLi += $.tag("span", card.name.escapeHTML(), { className : 'title' });
+
+    var cardNotes = (card.notes) ? $.tag("img", '', { src : '/images/notes.png', title : 'Card has notes', className : 'CardHasNotes' }) : "";
+    cardLi += $.tag("span", cardNotes + card.name.escapeHTML(), { className : 'title' });
 
     cardLi += $.tag("span", "hours left: " + $.tag("span", card.hours_left, { className : 'hours' }), { className : 'progress' });
 
@@ -1064,6 +1104,31 @@ TASKBOARD.api = {
      */
     updateFixBurndown : function(){ // api
         // no action so far
+    },
+
+    /*
+     * Expand or collapse a rows, i.e. showing or hiding cards of row except all cards in first column.
+     */
+    foldRow : function(row){
+        row = row.row;
+
+        // repeat show/hide for other remote-clients; see also TASKBOARD.bindHandlerFoldRow()
+        var cards = $(".column:gt(0) .row_" + row.id).children(); // don't hide 1st col
+        if(cards.length > 0){
+            if(row.fold){
+                cards.hide();
+                cards.parent("ol").addClass("foldedrow");
+            } else {
+                cards.show();
+                cards.parent("ol").removeClass("foldedrow");
+            }
+        }
+
+        $('#taskboard #fold_' + row.id).replaceWith( TASKBOARD.builder.actions.foldRow(row.id, row.fold) );
+        var foldLinkElem = $('#taskboard #fold_' + row.id);
+        TASKBOARD.bindHandlerFoldRow( foldLinkElem, row );
+
+        TASKBOARD.utils.expandTaskboard();
     }
 };
 
@@ -1825,6 +1890,9 @@ TASKBOARD.remote = {
         updateFixBurndown : function(date_str, hour_str){ // remote
             TASKBOARD.remote.callback("/taskboard/update_fixburndown",
                     { taskboard_id : TASKBOARD.id, date_str : date_str, hours : hour_str });
+        },
+        foldRow : function(rowId, curr_fold){
+            TASKBOARD.remote.callback('/taskboard/fold_row', { id: rowId, fold: (curr_fold ? 0 : 1) }, 'foldRow');
         }
     }
 };
@@ -1849,7 +1917,7 @@ $.each(['renameTaskboard',
         'addColumn', 'renameColumn', 'moveColumn', 'deleteColumn', 'cleanColumn',
         'addRow', 'deleteRow', 'cleanRow', 'moveRow', 'copyRow',
         'addCards','copyCard','moveCard','updateCardHours','changeCardColor','deleteCard', 'renameCard', 'updateCard',
-        'updateInitBurndown','updateFixBurndown'],
+        'updateInitBurndown','updateFixBurndown', 'foldRow'],
         function(){
             var action = this;
             sync[action] = function(data, self){

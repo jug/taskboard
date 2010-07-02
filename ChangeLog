@@ -1,4 +1,31 @@
 
+2010-07-02  jug  <taskboard@jens-gaspar.de>
+
+    # 09:40
+    * public/javascripts/taskboard.js (TASKBOARD.builder.actions.cardNotes, ~.foldRow;
+        TASKBOARD.builder.buildColumnFromJSON; TASKBOARD.builder.buildRowMeta;
+        TASKBOARD.builder.buildRowMeta; TASKBOARD.bindHandlerFoldRow; TASKBOARD.builder.buildCardFromJSON;
+        TASKBOARD.api.foldRow; TASKBOARD.remote.api.foldRow),
+      public/images/foldrow_collapse.png, public/images/foldrow_expand.png,
+      public/images/folded_background.gif, public/images/notes.png,
+      public/stylesheets/taskboard.css,
+      screenshots/tb-burndown-chart.png, screenshots/tb-burndown-fix.png,
+      screenshots/tb-burndown-setup.png, screenshots/tb-taskboard.png,
+      app/controllers/juggernaut_sync_controller.rb (JuggernautSyncController.sync_fold_row),
+      app/controllers/taskboard_controller.rb (TaskboardController.fold_row),
+      app/models/row.rb (Row.clone, ~.change_fold),
+      db/migrate/20100702094600_add_fold_to_rows.rb (AddFoldToRows),
+      db/schema.rb (Schema.rows):
+    - taskboard: added row-folding to expand and collapse row; show notes-icon if card has notes
+      - taskboard-row:
+        - fold row with click on '+' or '-' icon on left row-menu
+        - collapsing row hides cards except in first column
+        - change "folded" background-image on collapsed row
+        - row-fold-state is stored in database and sync'ed to other users
+      - taskboard-card: show notes-icon on small card for zoom-level 0 & 1,
+        if card has stored notes shown on opening big card view
+      - added screenshots of some new functionality
+
 2010-06-11  jug  <taskboard@jens-gaspar.de>
 
     # 18:51

@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100510212000) do
+ActiveRecord::Schema.define(:version => 20100702094600) do
 
   create_table "burnedhours", :force => true do |t|
     t.integer "taskboard_id", :null => false
@@ -76,11 +76,12 @@ ActiveRecord::Schema.define(:version => 20100510212000) do
   end
 
   create_table "rows", :force => true do |t|
-    t.text     "name",         :null => false
+    t.text     "name",                        :null => false
     t.integer  "position"
-    t.integer  "taskboard_id", :null => false
+    t.integer  "taskboard_id",                :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "fold",         :default => 0, :null => false
   end
 
   add_index "rows", ["taskboard_id"], :name => "fk_rows_taskboard_id"

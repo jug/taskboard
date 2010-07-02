@@ -119,6 +119,11 @@ class JuggernautSyncController < ApplicationController
     sync_row_action row, 'copyRow', options
   end
 
+  def sync_fold_row row, params = {}
+    options = { :message => "Fold row ##{row.id}" }.update params
+    sync_row_action row, 'foldRow', options
+  end
+
   # Card actions
 
   def sync_card_action card, action, params = {}

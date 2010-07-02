@@ -201,6 +201,10 @@
             padding: 5px;
         }
 
+#taskboard ol.foldedrow {
+    background: url(/images/folded_background.gif) repeat-y top center;
+}
+
 #taskboard div.row span {
    font-size: 80%;
    display: block;
@@ -391,6 +395,7 @@
     }
 
     #taskboard.collapsed .column ol.cards li span.progress,
+    #taskboard.collapsed .column ol.cards li ul.CardHasNotes,
     #taskboard.collapsed .column ol.cards li ul.tags {
         display:none;
     }
@@ -414,6 +419,7 @@
         margin-bottom: 0;
     }
 
+    #taskboard.zoom_0 img.CardHasNotes,
     #taskboard.zoom_0 .column ol.cards li span.progress,
     #taskboard.zoom_0 .column ol.cards li ul.tags {
         display:none;
@@ -435,6 +441,7 @@
         margin-bottom: 0;
     }
 
+    #taskboard.zoom_1 img.CardHasNotes,
     #taskboard.zoom_1 .column ol.cards li span.progress,
     #taskboard.zoom_1 .column ol.cards li ul.tags {
         display:none;
@@ -531,6 +538,22 @@
         background-image: url(/images/plus-small.gif);
     }
 
+    .actions li .foldRowExpand:hover,
+    .actions li .foldRowExpand {
+        background-image: url(/images/foldrow_expand.png);
+        margin-left: 16px;
+        width: 12px;
+        height: 12px;
+    }
+
+    .actions li .foldRowCollapse:hover,
+    .actions li .foldRowCollapse {
+        background-image: url(/images/foldrow_collapse.png);
+        margin-left: 16px;
+        width: 12px;
+        height: 12px;
+    }
+
     .big.actions li .changeColor {
         background-image: url(/images/color_big_off.png);
     }
@@ -543,6 +566,11 @@
     .big.actions li .copyCard {
         background-image: url(/images/plus-small.gif);
     }
+
+#taskboard img.CardHasNotes {
+    margin-right: 0.3em;
+    vertical-align: baseline;
+}
 
 /* Form drop animation hack */
 .ui-effects-wrapper {

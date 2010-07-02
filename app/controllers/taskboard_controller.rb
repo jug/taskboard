@@ -235,6 +235,15 @@ class TaskboardController < JuggernautSyncController
     end
   end
 
+  def fold_row
+    row = Row.find(params[:id].to_i)
+    if row.change_fold(params[:fold].to_i)
+      render :json => sync_fold_row(row)
+    else
+      send_error 'Row fold failed!'
+    end
+  end
+
   def add_card
     name = params[:name]
     taskboard_id = params[:taskboard_id].to_i
