@@ -1,4 +1,11 @@
 
+2010-09-30  jug  <taskboard@jens-gaspar.de>
+
+    # 23:20
+    * public/javascripts/taskboard.js (TASKBOARD.openColorPicker):
+    - taskboard-card: added colors brown/blue/magenta in card-color-picker
+      - example usage: technical debt (brown), impediments (blue), magenta (evaluation-bug/task)
+
 2010-07-02  jug  <taskboard@jens-gaspar.de>
 
     # 09:40

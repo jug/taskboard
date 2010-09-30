@@ -1551,8 +1551,8 @@ TASKBOARD.openColorPicker = function(card, top, left){
             $(card).data('data').color = color;
             TASKBOARD.remote.api.changeCardColor($(card).data('data').id, color);
         },
-        colors : ['#F8E065', '#FAA919', '#12C2D9', '#FF5A00', '#35B44B', '#CCCCCC'],
-        columns: 6,
+        colors : ['#F8E065', '#FAA919', '#C48444', '#12C2D9', '#FF5A00', '#35B44B', '#CCCCCC', '#D070D0'],
+        columns: 8,
         top : top,
         left : left,
         defaultColor : $(card).data('data').color
