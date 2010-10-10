@@ -223,10 +223,6 @@ TASKBOARD.builder.actions = {
         return $.tag("a", "Delete all cards from column", { className : 'cleanRow', title : 'Delete all cards from row', href : '#' });
     },
 
-    cardNotes : function(){
-        return $.tag("a", "Delete all cards from column", { className : 'cleanRow', title : 'Delete all cards from row', href : '#' });
-    },
-
     copyCardAction : function(){
         return $.tag("a", "+", { className : "copyCard", title : "Copy card", href : "#" });
     },
@@ -277,15 +273,17 @@ TASKBOARD.builder.buildColumnFromJSON = function(column){
         if(TASKBOARD.editor){
             cardsOl.sortable(TASKBOARD.builder.options.cardSort);
         }
+        var cardsCount = 0;
         if(column.cardsMap && column.cardsMap[row.id]){
             $.each(column.cardsMap[row.id].sortByPosition(), function(j, card){
                 cardElem = TASKBOARD.builder.buildCardFromJSON(card);
                 if(column.position > 1 && row.fold)
                     cardElem.hide();
                 cardsOl.append(cardElem);
+                cardsCount++;
             });
         }
-        if(column.position > 1 && row.fold)
+        if(cardsCount > 0 && column.position > 1 && row.fold)
             cardsOl.addClass("foldedrow");
         columnLi.append(cardsOl);
     });
@@ -371,8 +369,10 @@ TASKBOARD.builder.buildRowMeta = function(row){
             .bind("click", function(ev){
                 ev.preventDefault();
                 var cards = $(".column .row_" + row.id).children();
-                if(cards.length == 0){
+                if(cards.length == 0) {
                     $(this).warningTooltip("Row have no cards!", { position: "rightMiddle" });
+                } else if(row.fold) {
+                    $(this).warningTooltip("Row can only be cleaned if row not folded!", { position: "rightMiddle" });
                 } else if(confirm("Are you sure to delete all cards from row?")) {
                     TASKBOARD.remote.api.cleanRow(row.id);
                     cards.fadeOut(375, function(){ $(this).remove(); } );
@@ -405,6 +405,7 @@ TASKBOARD.bindHandlerFoldRow = function(element, row){
                     cards.parent("ol").addClass("foldedrow");
                 }
                 TASKBOARD.remote.api.foldRow(row.id, row.fold);
+                $(this).closest("div.row").data('data').fold = !row.fold;
             }
         });
 };

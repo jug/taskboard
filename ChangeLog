@@ -1,6 +1,16 @@
 
 2010-10-10  jug  <taskboard@jens-gaspar.de>
 
+    # 14:55
+    * public/javascripts/taskboard.js (TASKBOARD.builder.actions; TASKBOARD.builder.buildRowMeta;
+        TASKBOARD.bindHandlerFoldRow; TASKBOARD.builder.buildColumnFromJSON):
+    - fix bugs for folding taskboard-rows
+      - show FOLDED-background-image for every column on folded row after reload
+        instead of only columns with cards
+      - forbid deleting all cards with "-"-image on folded-row, because it messed up
+        fold-row-status without any card
+    - cleanup: removed unused 'cardNotes'-builder-action
+
     # 13:49
     * public/javascripts/taskboard.js (TASKBOARD.builder.actions.addCCPMInfoAction;
         TASKBOARD.builder.buildCardFromJSON; TASKBOARD.builder.buildBigCard;
