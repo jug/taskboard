@@ -242,6 +242,10 @@ TASKBOARD.builder.actions = {
         else
             return $.tag("a", "", { id : 'fold_' + row_id, className : 'foldRowCollapse', title : 'Collapse row', href : '#' });
     },
+
+    addCCPMInfoAction : function(){
+        return $.tag("a", "Add CCPM Info", { className : "addCCPMInfo", title : "Add CCPM Info", href : "#" });
+    },
 };
 
 /*
@@ -430,6 +434,9 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
     var cardNotes = (card.notes) ? $.tag("img", '', { src : '/images/notes.png', title : 'Card has notes', className : 'CardHasNotes' }) : "";
     cardLi += $.tag("span", cardNotes + card.name.escapeHTML(), { className : 'title' });
 
+    if(card.rd_id > 0)
+        cardLi += $.tag("span", TASKBOARD.Format.formatCCPM(card, false), { id: "ccpm_" + card.id, className : 'ccpm' });
+
     cardLi += $.tag("span", "hours left: " + $.tag("span", card.hours_left, { className : 'hours' }), { className : 'progress' });
 
     if(card.tag_list.length){
@@ -469,20 +476,22 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
     // edit-mode-only
     if(TASKBOARD.editor){
         cardLi.find(".progress .hours").editable(function(val){
+                /* not used with burn-down hours
                 var updatedDateString = $(this).closest(".cards > li").data('data').hours_left_updated;
                 var updatedToday = false;
                 if(updatedDateString){
                     var updatedDate = new Date();
                     updatedDate.setISO8601($(this).closest(".cards > li").data('data').hours_left_updated);
                     var now = new Date();
-                    if(now.getYear() == updatedDate.getYear() && now.getMonth() == updatedDate.getMonth() && now.getDay() == updatedDate.getDay()){
+                    if(now.getYear() == updatedDate.getYear() && now.getMonth() == updatedDate.getMonth() && now.getDate() == updatedDate.getDate()){
                         updatedToday = true;
                     }
                 }
-                var value;
                 if((!updatedToday || confirm("You already updated hours today. Are you sure you want to change them?\n\n" +
                                              "Click 'Cancel' to leave hours unchanged and wait till tomorrow or (if you are really sure) click 'OK' to save hours.")) &&
                                              !isNaN(val) && val >= 0) {
+                */
+                if(!isNaN(val) && val >= 0) {
                     TASKBOARD.remote.api.updateCardHours($(this).parent().parent().data('data').id, val);
                     $(this).parent().parent().data('data').hours_left = val;
                     return val;
@@ -490,6 +499,21 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
                     return this.revert;
                 }
             });
+
+        if(card.rd_id > 0) {
+            cardLi.find("#edit_ccpm_days_" + card.id)
+                .editable(function(val){
+                    if(!isNaN(val) && val >= 0) {
+                        TASKBOARD.remote.api.updateCardRemainingDaysDays(card.id, val);
+                        $(this).closest(".cards > li").data('data').rd_days = val;
+                        $(this).closest(".cards > li").data('data').rd_updated = new Date();
+                        $(this).closest("span#ccpmDaysInfo").removeClass("ccpmNeedsUpdate");
+                        return val;
+                    } else {
+                        return this.revert;
+                    }
+                });
+        }
 
         cardLi.find(".deleteCard").click(function(ev){
                 if(confirm("Do you really want to delete this card?")){
@@ -522,7 +546,8 @@ TASKBOARD.builder.buildBigCard = function(card){
     cardDl += $.tag("dt", "Actions", { id: "cardActionsTitle"});
 
     if(TASKBOARD.editor){
-        var actions = $.tag("li", TASKBOARD.builder.actions.changeColorAction());
+        var actions = $.tag("li", TASKBOARD.builder.actions.changeColorAction())
+                        + $.tag("li", TASKBOARD.builder.actions.addCCPMInfoAction(), { id: "addCCPMInfo" });
         actions = $.tag("ul", actions, { className: "big actions"});
         cardDl += $.tag("dd", actions, { id: "cardActions"});
     }
@@ -536,6 +561,9 @@ TASKBOARD.builder.buildBigCard = function(card){
     }
     cardDl += $.tag("dt", "Name");
     cardDl += $.tag("dd", card.name.escapeHTML(), { id : "name", className : "editable" });
+
+    cardDl += $.tag("dt", TASKBOARD.Format.formatCCPMId(card.rd_id, true), { id: "ccpmLabel", className: "ccpmInfo" });
+    cardDl += $.tag("dd", TASKBOARD.Format.formatCCPM(card, true), { id: "ccpmInfo", className: "ccpmInfo" });
 
     var notes = card.notes ? (new Showdown.converter()).makeHtml(card.notes.escapeHTML()) : "";
     cardDl += $.tag("dt", "Notes");
@@ -568,6 +596,10 @@ TASKBOARD.builder.buildBigCard = function(card){
     cardDl = $.tag("dl", cardDl, { id: 'bigCard_' + card.id, className : 'bigCard'});
 
     var bigCard = $(cardDl).css({ backgroundColor : card.color });
+    if(card.rd_id <= 0 )
+        $(bigCard).find(".ccpmInfo").hide();
+    else
+        $(bigCard).find(".addCCPMInfo").hide();
 
     // edit-mode-only
     if(TASKBOARD.editor){
@@ -583,6 +615,14 @@ TASKBOARD.builder.buildBigCard = function(card){
 
         bigCard.find(".changeColor").click(function(ev){
             TASKBOARD.openColorPicker(bigCard, $(this).offset().top - 5, $(this).offset().left + 12);
+            ev.preventDefault();
+            ev.stopPropagation();
+        });
+
+        bigCard.find(".addCCPMInfo").click(function(ev){
+            $(".addCCPMInfo").hide();
+            $("#ccpmLabel").show();
+            $("#edit_ccpm_id").text("ID");
             ev.preventDefault();
             ev.stopPropagation();
         });
@@ -646,8 +686,9 @@ TASKBOARD.builder.buildBigCard = function(card){
             .bind("mouseenter.editable", function(){ if($(this).find("form").length){ return; } $(this).addClass("hovered"); })
             .bind("mouseleave.editable", function(){ $(this).removeClass("hovered"); });
 
-        bigCard.find('#progress').editable(function(val){
-            if(!isNaN(val) && val >= 0) {
+        bigCard.find('#progress')
+            .editable(function(val){
+                if(!isNaN(val) && val >= 0) {
                     TASKBOARD.remote.api.updateCardHours(card.id, val, $(this).find("select").val(), function() {
                         // burndown-func overwritten for DomDev
                         //TASKBOARD.remote.get.cardBurndown(card.id, function(data){
@@ -657,14 +698,48 @@ TASKBOARD.builder.buildBigCard = function(card){
                     card.hours_left = val;
                     TASKBOARD.api.updateCard({ card: card }); // redraw small card
                     return val;
-            } else {
-                return this.revert;
-            }
-        }, { type : 'textselect', onblur : 'ignore', submit : 'Save', cancel : 'Cancel',
-            readyCallback: function(){ $(this).removeClass("hovered"); }
-        })
-        .bind("mouseenter.editable", function(){ if($(this).find("form").length){ return; } $(this).addClass("hovered"); })
-        .bind("mouseleave.editable", function(){ $(this).removeClass("hovered"); });
+                } else {
+                    return this.revert;
+                }
+            }, { type : 'textselect', onblur : 'ignore', submit : 'Save', cancel : 'Cancel',
+                readyCallback: function(){ $(this).removeClass("hovered"); }
+            })
+            .bind("mouseenter.editable", function(){ if($(this).find("form").length){ return; } $(this).addClass("hovered"); })
+            .bind("mouseleave.editable", function(){ $(this).removeClass("hovered"); });
+
+        bigCard.find('#edit_ccpm_id')
+            .editable(function(val){
+                if(!isNaN(val) && val > 0) { // valid ID -> update ID + enable days
+                    TASKBOARD.remote.api.updateCardRemainingDaysId(card.id, val);
+                    card.rd_id = val;
+                    $("#ccpmInfo").show().effect('highlight', {}, 1000);
+                    TASKBOARD.api.updateCard({ card: card }); // redraw small card
+                    return val;
+                } else { //if(isNaN(val) || val <= 0) // invalid-ID -> clear/disable CCPM + disable days
+                    TASKBOARD.remote.api.updateCardClearRemainingDays(card.id);
+                    card.rd_id = 0;
+                    card.rd_days = 0;
+                    card.rd_updated = null;
+                    $(".addCCPMInfo").show();
+                    $(".ccpmInfo").hide();
+                    TASKBOARD.api.updateCard({ card: card }); // redraw small card
+                    return this.revert;
+                }
+            });
+
+        bigCard.find('#edit_ccpm_days')
+            .editable(function(val){
+                if(!isNaN(val) && val >= 0) {
+                    TASKBOARD.remote.api.updateCardRemainingDaysDays(card.id, val);
+                    card.rd_days = val;
+                    card.rd_updated = new Date();
+                    $("span#ccpmUpdated").text( TASKBOARD.Format.formatDate(card.rd_updated) ).effect('highlight', {}, 1000);
+                    TASKBOARD.api.updateCard({ card: card }); // redraw small card
+                    return val;
+                } else {
+                    return this.revert;
+                }
+            });
 
         bigCard.find('#tags .deleteTag').bind('click', deleteTagCallback);
     }
@@ -1770,6 +1845,7 @@ TASKBOARD.remote = {
                         }
                     });
     },
+
     get: {
         taskboardData: function(id, callback){
             $.getJSON("/taskboard/get_taskboard/" + id, function(data){
@@ -1807,6 +1883,7 @@ TASKBOARD.remote = {
             });
         }
     },
+
     //TODO: change to POST requests
     api: {
         addCards : function(name, column_id){
@@ -1893,7 +1970,16 @@ TASKBOARD.remote = {
         },
         foldRow : function(rowId, curr_fold){
             TASKBOARD.remote.callback('/taskboard/fold_row', { id: rowId, fold: (curr_fold ? 0 : 1) }, 'foldRow');
-        }
+        },
+        updateCardRemainingDaysId : function(cardId, id){
+            TASKBOARD.remote.callback('/card/update_rd_id/', { id: cardId, new_id: id });
+        },
+        updateCardRemainingDaysDays : function(cardId, days){
+            TASKBOARD.remote.callback('/card/update_rd_days/', { id: cardId, days_left: days });
+        },
+        updateCardClearRemainingDays : function(cardId){
+            TASKBOARD.remote.callback('/card/clear_rd/', { id: cardId });
+        },
     }
 };
 
@@ -1986,6 +2072,58 @@ TASKBOARD.cookie = {
 
     setTaskboardZoom : function(taskboardId, zoom){
         return $.cookie('taskboard_zoom_' + taskboardId, zoom, this.options);
+    }
+};
+
+// formatting
+TASKBOARD.Format = {
+    monthNames : [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ],
+
+    buildDate : function(sdate) { // sdate (string) = YYYY-MM-DDTHH:MM:SSZ
+        if( (sdate !== null) && !(sdate instanceof Date) && typeof(sdate) == 'string' )
+            sdate = new Date(parseInt(sdate.substr(0,4)), parseInt(sdate.substr(5,2)) - 1, parseInt(sdate.substr(8,2)));
+        return sdate;
+    },
+
+    formatDate : function(dateArg) {
+        var fdate = TASKBOARD.Format.buildDate(dateArg);
+
+        if( (fdate !== null) && (fdate instanceof Date) )
+            return ((fdate.getDate() <= 9) ? "0" : "") + fdate.getDate() + "-"
+                + TASKBOARD.Format.monthNames[fdate.getMonth()] + "-" + fdate.getFullYear();
+        else
+            return "---";
+    },
+
+    formatCCPMId : function(ccpmId, enableEdit){
+        if( ccpmId > 0 )
+            return "CCPM #" + ( enableEdit ? $.tag("span", ccpmId, { id: "edit_ccpm_id" }) : ccpmId );
+        else
+            return (enableEdit) ? "CCPM #" + $.tag("span", "ID", { id: "edit_ccpm_id" }) : "CCPM";
+    },
+
+    formatCCPM : function(card, isBigCard) {
+        var needsUpdate = ( card.rd_days > 0 );
+        var rd_updated = TASKBOARD.Format.buildDate(card.rd_updated);
+
+        if( needsUpdate ) {
+            var today = new Date();
+            today = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+            if( (rd_updated !== null) && (rd_updated.getTime() >= today.getTime()) )
+                needsUpdate = false; // is-today
+        }
+
+        var suffix = (isBigCard) ? '' : '_' + card.id;
+        var rdDays = $.tag("span", card.rd_days, { id: "edit_ccpm_days" + suffix, className: "ccpmDays" }) + " days"
+
+        if( isBigCard ) {
+            var rdDate = $.tag("span", TASKBOARD.Format.formatDate(rd_updated), { id: "ccpmUpdated" });
+            return rdDays + " [" + rdDate + "]";
+        } else {
+            var rdClass = (needsUpdate) ? 'ccpmNeedsUpdate' : 'ccpmDone';
+            return TASKBOARD.Format.formatCCPMId(card.rd_id, false) + ': '
+                + $.tag("span", rdDays, { id: "ccpmDaysInfo", className: rdClass });
+        }
     }
 };
 

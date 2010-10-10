@@ -412,6 +412,16 @@
 				}
 			},
 			// TODO: take it out of here!
+			text_sized: {
+				element : function(settings, original) {
+					var input = $('<input type="text">');
+					if (settings.size != 'none') { input.attr('size', settings.size); }
+					input.attr('autocomplete','off');
+					$(this).append(input);
+					return(input);
+				}
+			},
+			// TODO: take it out of here!
 			textselect: {
 				element : function(settings, original) {
 					var div = $('<div/>');

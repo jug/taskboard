@@ -1,4 +1,33 @@
 
+2010-10-10  jug  <taskboard@jens-gaspar.de>
+
+    # 13:49
+    * public/javascripts/taskboard.js (TASKBOARD.builder.actions.addCCPMInfoAction;
+        TASKBOARD.builder.buildCardFromJSON; TASKBOARD.builder.buildBigCard;
+        TASKBOARD.remote.api.updateCardRemainingDaysId, ~.updateCardRemainingDaysDay,
+          ~.updateCardClearRemainingDay;
+        TASKBOARD.Format.monthNames, ~.buildDate, ~.formatDate, ~.formatCCPMId, ~.formatCCPM),
+      public/javascripts/lib/jquery.jeditable.js (jQuery.editable.types.default.text_sized),
+      public/images/cplus.gif,
+      public/stylesheets/taskboard.css,
+      app/controllers/card_controller.rb (CardController.clear_rd, ~.update_rd_id, ~.update_rd_days),
+      app/models/card.rb (Card.clone),
+      db/migrate/20101008072000_add_remainingdays_to_cards.rb (AddRemainingdaysToCards),
+      db/schema.rb (Schema.cards):
+    - taskboard-card: added support to track date for CCPM (Critical Chain Project Management)
+      - big card: click "C+"-icon to add CCPM #ID -> click "ID" to edit
+      - big card: edit CCPM-id, card is a CCPM-card if ccpm-id > 0,
+        otherwise card is reverted to normal card
+      - big card: edit CCPM-days representing remaining days for CCPM, which must be done daily,
+        shown [date] is date of last-update of days updated on small-card
+      - small card: CCPM-info is shown as "CCPM #id: X days", shown as "warning" in red+italic
+        if not updated today
+      - taskboard: need manual refresh to see need-for-update of CCPM-days
+      - small card: edit CCPM-days = remaining days for CCPM-story, warning removed after updating
+    - taskboard: allow updating card-hours more than once a day without asking for confirmation
+    - taskboard: extended cards-table with fields: rd_id, rd_days, rd_updated
+    - jquery.jeditable.js: added default 'text_sized' for jQuery jeditable-library editable-types
+
 2010-09-30  jug  <taskboard@jens-gaspar.de>
 
     # 23:20

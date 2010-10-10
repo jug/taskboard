@@ -1,28 +1,28 @@
 # Copyright (C) 2009 Cognifide
-# 
+#
 # This file is part of Taskboard.
-# 
+#
 # Taskboard is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Taskboard is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
 
 class Card < ActiveRecord::Base
   include ActionView::Helpers::TextHelper # to truncate short name
-  
+
   has_many :hours, :order => "date asc"
   belongs_to :taskboard
   belongs_to :column
   belongs_to :row
-  
+
   DEFAULT_COLOR = '#F8E065'.freeze
 
   # card's list scope is within a single cell
@@ -34,6 +34,7 @@ class Card < ActiveRecord::Base
   def clone taskboard_id = taskboard_id, column_id = column_id, row_id = row_id
     Card.new(:name => name, :url => url, :issue_no => issue_no, :notes => notes, :position => position,
       :color => color, :tag_list => tag_list,
+      :rd_id => rd_id, :rd_days => rd_days, :rd_updated => rd_updated,
       :taskboard_id => taskboard_id, :column_id => column_id, :row_id => row_id)
   end
 
@@ -48,7 +49,7 @@ class Card < ActiveRecord::Base
     card.insert_at(1)
     card
   end
-  
+
   # FIXME: why self is needed there?
   def move_to target_column_id, target_row_id, target_position
     target_column_id ||= column_id
@@ -61,15 +62,15 @@ class Card < ActiveRecord::Base
     end
     insert_at target_position
   end
-  
+
   def color
      read_attribute(:color).nil? ? DEFAULT_COLOR : read_attribute(:color)
   end
-  
+
   def short_name
     self.issue_no || truncate(self.name)
   end
-  
+
   def hours_left
     self.hours.last.nil? ? 0 : self.hours.last.left
   end
@@ -77,7 +78,7 @@ class Card < ActiveRecord::Base
   def hours_left_updated
     self.hours.last.nil? ? nil : self.hours.last.date
   end
-  
+
   def burndown due_time = Time.now
     burndown = {}
     current_date = nil
@@ -100,7 +101,7 @@ class Card < ActiveRecord::Base
     end
     return burndown
   end
-  
+
   def update_hours left, added_at = Time.now
     hour = self.hours.sort{|x,y| y.date <=> x.date}.
       select {|h| h.date.beginning_of_day <= added_at && h.date.end_of_day >= added_at}[0]
@@ -112,7 +113,7 @@ class Card < ActiveRecord::Base
       self.save
     end
   end
-    
+
   def to_json options = {}
     options[:except] = [:created_at, :updated_at, :taskboard_id]
     options[:except] << :url if url.nil?
@@ -130,5 +131,5 @@ class Card < ActiveRecord::Base
     self.color = color
     save
   end
-  
+
 end

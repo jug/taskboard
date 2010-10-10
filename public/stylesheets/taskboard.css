@@ -213,6 +213,12 @@
    color: darkred;
 }
 
+#taskboard span.ccpmNeedsUpdate {
+   color: darkred;
+   font-weight: bold;
+   font-style: italic;
+}
+
         #taskboard #metaLane .row {
             border-color: #FFFFFF;
         }
@@ -346,6 +352,26 @@
                         }
 
                             #taskboard .column ol.cards li span.progress .hours form input{
+                                min-width: 30px;
+                                text-align: right;
+                            }
+
+                #taskboard .column ol.cards li span.ccpm {
+                    display:block;
+                    font-size: 0.8em;
+                    text-align: right;
+                }
+
+                    #taskboard .column ol.cards li span.ccpm .ccpmDays {
+                        font-size: 1.2em;
+                        font-weight: bold;
+                    }
+
+                        #taskboard .column ol.cards li span.ccpm .ccpmDays form {
+                            display: inline;
+                        }
+
+                            #taskboard .column ol.cards li span.ccpm .ccpmDays form input{
                                 min-width: 30px;
                                 text-align: right;
                             }
@@ -557,9 +583,14 @@
     .big.actions li .changeColor {
         background-image: url(/images/color_big_off.png);
     }
-
     .big.actions li .changeColor:hover {
         background-image: url(/images/color_big_on.png);
+    }
+
+    .big.actions li .addCCPMInfo,
+    .big.actions li .addCCPMInfo:hover {
+        background-image: url(/images/cplus.gif);
+        margin-top: 5px;
     }
 
     .big.actions li .copyCard:hover,
@@ -743,6 +774,13 @@
     .bigCard .tags li a:hover {
         color: #000000;
     }
+
+.bigCard span.ccpmDays form {
+   display: inline;
+}
+.bigCard span.ccpmDays form input {
+   min-width: 30px;
+}
 
 /* Resizable
 ----------------------------------*/

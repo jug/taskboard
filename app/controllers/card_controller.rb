@@ -98,6 +98,33 @@ class CardController < JuggernautSyncController
     render :text => burndown(@card)
   end
 
+  def clear_rd
+    @card = Card.find(params[:id].to_i)
+    before = @card.rd_days
+    @card.rd_id = 0
+    @card.rd_days = 0
+    @card.rd_updated = nil
+    @card.save
+    render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Cleared Remaining Days for '#{@card.name}'"})
+  end
+
+  def update_rd_id
+    @card = Card.find(params[:id].to_i)
+    before = @card.rd_id
+    @card.rd_id = params[:new_id].to_i
+    @card.save
+    render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Id updated for '#{@card.name}'"})
+  end
+
+  def update_rd_days
+    @card = Card.find(params[:id].to_i)
+    before = @card.rd_days
+    @card.rd_days = params[:days_left].to_i
+    @card.rd_updated = Time.now
+    @card.save
+    render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Left updated for '#{@card.name}'"})
+  end
+
   private
 
   def send_error message = 'Error!'
