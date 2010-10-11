@@ -123,6 +123,9 @@
 
 			$(this)[settings.event](function(e) {
 
+            // /* TASKBOARD */ [10-Oct-2010/JUG] bugfix when using jquery-overlay -> propagation to overlay must be stopped, otherwise overlay.close() will be fired
+            e.stopPropagation();
+
 				/* prevent throwing an exeption if edit field is clicked again */
 				if (self.editing) {
 					return;

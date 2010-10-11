@@ -255,7 +255,7 @@ $.fn.warningTooltip = function(message, settings){
 }
 
 $.fn.helpTooltip = function(message){
-    return $(this).tooltip(message, { showEvent: 'focus', hideEvent: 'blur', timeout: false, position: "rightMiddle" });
+    return $(this).tooltip(message, { showEvent: 'focus', hideEvent: 'blur', timeout: false, position: "rightMiddle", styles: { zIndex: 1002 } });
 }
 
 $.tag = function(tagName, content, attrs){

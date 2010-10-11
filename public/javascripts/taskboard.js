@@ -466,8 +466,8 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
     cardLi = $(cardLi)
         .css("background-color", card.color)
         .data("data", card)
-        .bind("dblclick", function(){
-            TASKBOARD.openCard($(this).data('data'));
+        .bind("dblclick", function(ev){
+            TASKBOARD.openCard(this, $(this).data('data'));
         });
 
     $.each(card.tag_list, function(i, tag){
@@ -592,9 +592,9 @@ TASKBOARD.builder.buildBigCard = function(card){
     }
 
     cardDl += $.tag("dt", "Hours left");
-    cardDl += $.tag("dd", card.hours_left, { id : "progress" });
+    cardDl += $.tag("dd", card.hours_left, { id : "progress", className: "editable" });
 
-    cardDl = $.tag("dl", cardDl, { id: 'bigCard_' + card.id, className : 'bigCard'});
+    cardDl = $.tag("dl", cardDl, { id: 'bigCard', className : 'bigCard'});
 
     var bigCard = $(cardDl).css({ backgroundColor : card.color });
     if(card.rd_id <= 0 )
@@ -604,7 +604,7 @@ TASKBOARD.builder.buildBigCard = function(card){
 
     // edit-mode-only
     if(TASKBOARD.editor){
-        var deleteTagCallback = function(){
+        var deleteTagCallback = function(ev){
             var tag = $(this).parent().find(".tag").text();
             TASKBOARD.remote.api.removeTag(card.id, tag);
             var index = card.tag_list.indexOf(tag);
@@ -612,6 +612,8 @@ TASKBOARD.builder.buildBigCard = function(card){
             TASKBOARD.api.updateCard({ card: card });
             TASKBOARD.remote.api.removeTag(card.id, tag);
             $(this).parent().remove();
+            ev.preventDefault();
+            ev.stopPropagation();
         };
 
         bigCard.find(".changeColor").click(function(ev){
@@ -726,7 +728,11 @@ TASKBOARD.builder.buildBigCard = function(card){
                     TASKBOARD.api.updateCard({ card: card }); // redraw small card
                     return this.revert;
                 }
-            });
+            }, {
+                readyCallback: function(){ $(this).removeClass("hovered"); }
+            })
+            .bind("mouseenter.editable", function(){ if($(this).find("form").length){ return; } $(this).addClass("hovered"); })
+            .bind("mouseleave.editable", function(){ $(this).removeClass("hovered"); });
 
         bigCard.find('#edit_ccpm_days')
             .editable(function(val){
@@ -740,7 +746,11 @@ TASKBOARD.builder.buildBigCard = function(card){
                 } else {
                     return this.revert;
                 }
-            });
+            }, {
+                readyCallback: function(){ $(this).removeClass("hovered"); }
+            })
+            .bind("mouseenter.editable", function(){ if($(this).find("form").length){ return; } $(this).addClass("hovered"); })
+            .bind("mouseleave.editable", function(){ $(this).removeClass("hovered"); });
 
         bigCard.find('#tags .deleteTag').bind('click', deleteTagCallback);
     }
@@ -1151,7 +1161,7 @@ TASKBOARD.api = {
 
     changeCardColor : function(card){
         card = card.card;
-        var cardElements = $('#card_' + card.id).add("#bigCard_" + card.id);
+        var cardElements = $('#card_' + card.id).add("#bigCard");
         cardElements.css({ backgroundColor : card.color });
         cardElements.data('data').color = card.color;
     },
@@ -1524,12 +1534,32 @@ TASKBOARD.burndown.render = function(element, data){
 
 TASKBOARD.showBurndown = function(ev){
     ev.preventDefault();
+
     var self = TASKBOARD;
     TASKBOARD.remote.get.taskboardBurndown2(self.id, function(data){
         if(!$('#burndown').exists()){
             $('body').append('<div id="burndown"></div>');
         }
 
+        // div must have height and width to plot correctly
+        $("#burndown").css({ height: '700px', width : '900px' }).show();
+        TASKBOARD.burndown.render($('#burndown'), data);
+        $("#burndown").css({
+                backgroundColor: 'white',
+                border: '1px solid #CCCCCC',
+                borderRadius: '25px',
+                zIndex: 1001
+            });
+
+        $("#taskboard").overlay({
+                target: "#burndown",
+                mask: { color: 'white', loadSpeed: 200, opacity: 0.7, zIndex: 999 },
+                closeOnEsc: false,
+                load: true,
+                clickMode: false // JUG: added fix in overlay-lib disabling adding click-event
+            });
+
+        /* [10-Oct-2010/JUG] replaced openOverlay() by using jquery-tools-overlay lib
         // div must have height and width to plot
         $("#burndown").css({ height: '700px', width : '900px' });
         $("#burndown").show();
@@ -1548,6 +1578,7 @@ TASKBOARD.showBurndown = function(ev){
             borderRadius: '20px',
             zIndex: 1001
         });
+        */
     });
 
     /* original burndown-showing
@@ -1604,11 +1635,25 @@ TASKBOARD.fixBurndown = function(ev){
     });
 };
 
-TASKBOARD.openCard = function(card){
+TASKBOARD.openCard = function(bindObj, card){
     $('.bigCard').remove();
     var bigCard = TASKBOARD.builder.buildBigCard(card);
-    bigCard.appendTo($('body')).hide()
-        .openOverlay({ zIndex: 1001 });
+    bigCard.appendTo($('body')).hide();
+    $(bindObj).overlay({
+            target: "#bigCard",
+            mask: { color: 'white', loadSpeed: 200, opacity: 0.7, zIndex: 999 },
+            closeOnEsc: false,
+            load: true,
+            clickMode: false, // JUG: added fix in overlay-lib disabling adding click-event
+
+            onBeforeClose: function(ev) {
+                if($(this.getOverlay()).find(".editable form").length) {
+                    ev.preventDefault();
+                    alert("You have unsaved changes. Save or cancel them before closing!");
+                    return;
+                }
+            }
+        });
 
     /* NOTE: no burndown on card
     TASKBOARD.remote.get.cardBurndown(card.id, function(data){
@@ -1628,7 +1673,7 @@ TASKBOARD.openColorPicker = function(card, top, left){
             TASKBOARD.remote.api.changeCardColor($(card).data('data').id, color);
         },
         colors : ['#F8E065', '#FAA919', '#C48444', '#12C2D9', '#FF5A00', '#35B44B', '#CCCCCC', '#D070D0'],
-        columns: 8,
+        columns: 4,
         top : top,
         left : left,
         defaultColor : $(card).data('data').color
@@ -1779,31 +1824,33 @@ TASKBOARD.tags = {
 };
 
 // TODO: refactor and make more generic plugin
+/* [10-Oct-2010/JUG] refactored using jquery-tools overlay lib
 $.fn.openOverlay = function(css){
     var self = this;
     $('body').append('<div id="overlay"></div>');
-        $("#overlay").css({
-            height: '100%',
-            width : '100%',
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            backgroundColor: 'white',
-            opacity: 0.8,
-            zIndex: 1000
-        }).click(function(){
-            if($(self).find(".editable form").length) {
-                alert("You have unsaved changes. Save or cancel them before closing");
-                return;
-            }
-            $('#overlay').remove();
-            $(self).hide();
-            $('#taskboard').css({ position : ''});
-        });
-        $(this).css(css);
+    $("#overlay").css({
+        height: '100%',
+        width : '100%',
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        backgroundColor: 'white',
+        opacity: 0.8,
+        zIndex: 1000
+    }).click(function(){
+        if($(self).find(".editable form").length) {
+            alert("You have unsaved changes. Save or cancel them before closing");
+            return;
+        }
+        $('#overlay').remove();
+        $(self).hide();
+        $('#taskboard').css({ position : ''});
+    });
+    $(this).css(css);
     $(this).show();
     $('#taskboard').css({ position : 'fixed'});
 };
+*/
 
 TASKBOARD.remote = {
     /*
@@ -2098,9 +2145,9 @@ TASKBOARD.Format = {
 
     formatCCPMId : function(ccpmId, enableEdit){
         if( ccpmId > 0 )
-            return "CCPM #" + ( enableEdit ? $.tag("span", ccpmId, { id: "edit_ccpm_id" }) : ccpmId );
+            return "CCPM #" + ( enableEdit ? $.tag("span", ccpmId, { id: "edit_ccpm_id", className: "editable" }) : ccpmId );
         else
-            return (enableEdit) ? "CCPM #" + $.tag("span", "ID", { id: "edit_ccpm_id" }) : "CCPM";
+            return (enableEdit) ? "CCPM #" + $.tag("span", "ID", { id: "edit_ccpm_id", className: "editable" }) : "CCPM";
     },
 
     formatCCPM : function(card, isBigCard) {
@@ -2115,7 +2162,7 @@ TASKBOARD.Format = {
         }
 
         var suffix = (isBigCard) ? '' : '_' + card.id;
-        var rdDays = $.tag("span", card.rd_days, { id: "edit_ccpm_days" + suffix, className: "ccpmDays" }) + " days"
+        var rdDays = $.tag("span", card.rd_days, { id: "edit_ccpm_days" + suffix, className: "editable ccpmDays" }) + " days"
 
         if( isBigCard ) {
             var rdDate = $.tag("span", TASKBOARD.Format.formatDate(rd_updated), { id: "ccpmUpdated" });

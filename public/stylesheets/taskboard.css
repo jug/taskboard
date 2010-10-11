@@ -301,7 +301,6 @@
                 }
 
                     #taskboard .column ol.cards li ul.actions li {
-                        min-height: auto;
                         margin-bottom: 2px;
                         border: none;
                         padding: 0;
@@ -775,11 +774,15 @@
         color: #000000;
     }
 
-.bigCard span.ccpmDays form {
+.bigCard span.ccpmDays form,
+.bigCard span#edit_ccpm_id form {
    display: inline;
 }
 .bigCard span.ccpmDays form input {
    min-width: 30px;
+}
+.bigCard span#edit_ccpm_id form input {
+   min-width: 4em;
 }
 
 /* Resizable

@@ -1,4 +1,40 @@
 
+2010-10-11  jug  <taskboard@jens-gaspar.de>
+
+    # 02:00
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON; TASKBOARD.builder.buildBigCard;
+        TASKBOARD.api.changeCardColor; TASKBOARD.showBurndown; TASKBOARD.openCard; TASKBOARD.openColorPicker;
+        $.fn.openOverlay; TASKBOARD.Format.formatCCPMId, ~.formatCCPM),
+      public/javascripts/lib/jquery.jeditable.js ($.fn.editable),
+      public/javascripts/utils.js ($.fn.helpTooltip),
+      public/javascripts/lib/toolbox.expose.js,
+      public/javascripts/lib/overlay.js,
+      public/stylesheets/taskboard.css,
+      app/views/taskboard/show.html.erb,
+      vendor/plugins/jquery/jquery-1.4.2.js,
+      vendor/plugins/jquery-tools/toolbox.expose.js,
+      vendor/plugins/jquery-tools/overlay.js:
+    - important taskboard-fix: no repositioning on showing overlay for bigcard & burndown,
+      fixed various other bugs
+      - bugfix taskboard: use jQuery-overlay-lib to show bigcard & burndown at same pos
+        without scrolling to top
+        - replaced openOverlay() by using jQuery-tools overlay-lib
+        - updated jQuery-lib from 1.3.2 to 1.4.2 as dependency for overlay-lib
+        - added jQuery-tools toolbox.expose.js as dependency for overlay-lib
+        - bugfix in jQuery-jeditable-lib used together with jQuery-overlay-lib:
+          propagation to overlay must be stopped, otherwise overlay.close() will be fired
+        - fix missing stopPropagation() + preventDefault() for big-card delete-tag when using overlay-lib
+
+      - taskboard-card:
+        - splitted color-picker in 2 lines a 4 colors
+        - fixed missing editable for progress-hours / ccpm-id / ccpm-days on bigcard changes-check
+        - fixed bigcard-notes help-tooltip by using zIndex=1002
+        - added hovering on bigcard for CCPM-id + CCPM-days editables
+
+      - taskboard-CSS:
+        - fixed CSS min-height has no auto-value
+        - fixed CCPM-id editable: use CSS to specify width and inline-form
+
 2010-10-10  jug  <taskboard@jens-gaspar.de>
 
     # 14:55
