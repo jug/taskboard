@@ -1,4 +1,15 @@
 
+2010-10-13  jug  <taskboard@jens-gaspar.de>
+
+    # 00:12
+    * public/javascripts/taskboard.js (TASKBOARD.openCard),
+      public/javascripts/utils.js ($.fn.closeTooltip):
+    - fix bugs for taskboard big-cards
+      - fix overlay to scroll foreground instead of only background for big-cards with much text
+        that requires scrolling
+      - fix edit-notes closing tooltip on closing big-card, before sometimes tooltip stayed open
+        being unclosable
+
 2010-10-11  jug  <taskboard@jens-gaspar.de>
 
     # 02:00

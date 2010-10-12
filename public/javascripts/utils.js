@@ -181,7 +181,7 @@ $.fn.equalHeight = function(options){
 $.fn.rollover = function(){
     return this.filter('img').each(function(i, el){
         $(el).hover( function(){ $(this).attr("src", $(this).attr("src").split('_off').join('_on')); },
-                     function(){ $(this).attr("src", $(this).attr("src").split('_on').join('_off')); } );
+                            function(){ $(this).attr("src", $(this).attr("src").split('_on').join('_off')); } );
     });
 };
 
@@ -256,6 +256,10 @@ $.fn.warningTooltip = function(message, settings){
 
 $.fn.helpTooltip = function(message){
     return $(this).tooltip(message, { showEvent: 'focus', hideEvent: 'blur', timeout: false, position: "rightMiddle", styles: { zIndex: 1002 } });
+}
+
+$.fn.closeTooltip = function() {
+    $('#tooltip').fadeOut(200, function(){ $(this).remove(); });
 }
 
 $.tag = function(tagName, content, attrs){

@@ -1645,6 +1645,7 @@ TASKBOARD.openCard = function(bindObj, card){
             closeOnEsc: false,
             load: true,
             clickMode: false, // JUG: added fix in overlay-lib disabling adding click-event
+            fixed: false, // move card with background for big-cards with much text that needs scrolling
 
             onBeforeClose: function(ev) {
                 if($(this.getOverlay()).find(".editable form").length) {
@@ -1652,6 +1653,7 @@ TASKBOARD.openCard = function(bindObj, card){
                     alert("You have unsaved changes. Save or cancel them before closing!");
                     return;
                 }
+                $(this).closeTooltip();
             }
         });
 
