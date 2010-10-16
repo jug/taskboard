@@ -82,6 +82,7 @@ class Taskboard < ActiveRecord::Base
     }[0]
     if burnedhour.nil?
       self.burnedhours << Burnedhour.new(:taskboard_id => id, :date => chktime_at, :hours => hours )
+      self.updated_at = Time.now
       self.save
     else
       Burnedhour.update_counters burnedhour.id, :hours => hours

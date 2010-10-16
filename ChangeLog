@@ -1,4 +1,16 @@
 
+2010-10-16  jug  <taskboard@jens-gaspar.de>
+
+    # 11:08
+    * app/controllers/card_controller.rb (CardController.update_name, ~.update_notes, ~.add_tag,
+        ~.remove_tag, ~.clear_rd, ~.update_rd_id, ~.update_rd_days, ~.reset_active_rd_cards),
+      app/controllers/taskboard_controller.rb (TaskboardController.rename_taskboard, ~.add_card),
+      app/controllers/project_controller.rb (ProjectController.rename),
+      app/models/card.rb (Card.clone, ~.move_to, ~.update_hours, ~.change_color),
+      app/models/taskboard.rb (Taskboard.update_burnedhours):
+    - taskboard-card: update cards-updated-date on each card-change
+      - added method in card-controller to reset all active CCPM-cards on open taskboards
+
 2010-10-13  jug  <taskboard@jens-gaspar.de>
 
     # 00:12

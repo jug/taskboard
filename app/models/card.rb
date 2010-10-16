@@ -35,7 +35,8 @@ class Card < ActiveRecord::Base
     Card.new(:name => name, :url => url, :issue_no => issue_no, :notes => notes, :position => position,
       :color => color, :tag_list => tag_list,
       :rd_id => rd_id, :rd_days => rd_days, :rd_updated => rd_updated,
-      :taskboard_id => taskboard_id, :column_id => column_id, :row_id => row_id)
+      :taskboard_id => taskboard_id, :column_id => column_id, :row_id => row_id,
+      :updated_at => Time.now)
   end
 
   def validate
@@ -59,6 +60,7 @@ class Card < ActiveRecord::Base
       remove_from_list
       self.column_id = target_column_id
       self.row_id = target_row_id
+      self.updated_at = Time.now
     end
     insert_at target_position
   end
@@ -110,8 +112,9 @@ class Card < ActiveRecord::Base
       hour.save
     else
       self.hours << Hour.new(:left => left, :date => added_at )
-      self.save
     end
+    self.updated_at = Time.now
+    self.save
   end
 
   def to_json options = {}
@@ -129,6 +132,7 @@ class Card < ActiveRecord::Base
   # returns true if color was changed, false otherwise
   def change_color color
     self.color = color
+    self.updated_at = Time.now
     save
   end
 

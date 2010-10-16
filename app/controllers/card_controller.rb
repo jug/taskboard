@@ -25,6 +25,7 @@ class CardController < JuggernautSyncController
     @card = Card.find(params[:id].to_i)
     before = @card.name
     @card.name = params[:name]
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.name, :message => "Card '#{before}' renamed to '#{@card.name}'"})
   end
@@ -33,6 +34,7 @@ class CardController < JuggernautSyncController
     @card = Card.find(params[:id].to_i)
     before = @card.notes.nil? ? '' : @card.notes.gsub(/\n/, "\\n")
     @card.notes = params[:notes]
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.notes.gsub(/\n/, "\\n"), :message => "Notes updated for '#{@card.name}'"})
   end
@@ -81,6 +83,7 @@ class CardController < JuggernautSyncController
     tags.each { |tag| tag.strip! }
     before = @card.tag_list.to_s
     @card.tag_list.add(tags)
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.tag_list.to_s, :message => "Tags added to '#{@card.name}'"})
   end
@@ -89,6 +92,7 @@ class CardController < JuggernautSyncController
     @card = Card.find(params[:id].to_i)
     before = @card.tag_list.to_s
     @card.tag_list.remove(params[:tag])
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.tag_list.to_s, :message => "Tags removed from '#{@card.name}'"})
   end
@@ -104,6 +108,7 @@ class CardController < JuggernautSyncController
     @card.rd_id = 0
     @card.rd_days = 0
     @card.rd_updated = nil
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Cleared Remaining Days for '#{@card.name}'"})
   end
@@ -112,6 +117,7 @@ class CardController < JuggernautSyncController
     @card = Card.find(params[:id].to_i)
     before = @card.rd_id
     @card.rd_id = params[:new_id].to_i
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Id updated for '#{@card.name}'"})
   end
@@ -121,8 +127,24 @@ class CardController < JuggernautSyncController
     before = @card.rd_days
     @card.rd_days = params[:days_left].to_i
     @card.rd_updated = Time.now
+    @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Left updated for '#{@card.name}'"})
+  end
+
+  def reset_active_rd_cards
+    interval_days = params[:days].to_i
+
+    # find taskboards "in use" since X days
+    taskboards = Card.all( :select => "DISTINCT taskboard_id",
+                           :where  => "updated_at >= NOW() - INTERVAL #{interval_days} DAY" )
+    taskboards.each { |row|
+      tb_id = row.taskboard_id
+      cards = Card.all( :where => "taskboard_id = #{tb_id} AND rd_id > 0 AND rd_days > 0" )
+      cards.each { |card|
+        render :json => sync_update_card(card, { :message => "Reset CCPM for '#{@card.name}'"})
+      }
+    }
   end
 
   private

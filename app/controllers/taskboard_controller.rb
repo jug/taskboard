@@ -65,6 +65,7 @@ class TaskboardController < JuggernautSyncController
     if not params[:name].blank?
       before = taskboard.name
       taskboard.name = params[:name]
+      taskboard.updated_at = Time.now
       taskboard.save!
       render :json => sync_rename_taskboard(taskboard, { :before => before })
     else
@@ -286,6 +287,7 @@ class TaskboardController < JuggernautSyncController
         card.taskboard_id = taskboard_id
         card.column_id = column_id
         card.row_id = row_id
+        card.updated_at = Time.now
         card.save!
         card.insert_at(1)
       }
