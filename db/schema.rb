@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101008072000) do
+ActiveRecord::Schema.define(:version => 20101019193100) do
 
   create_table "burnedhours", :force => true do |t|
     t.integer "taskboard_id", :null => false
@@ -34,6 +34,7 @@ ActiveRecord::Schema.define(:version => 20101008072000) do
     t.integer  "rd_id",                       :default => 0, :null => false
     t.integer  "rd_days",                     :default => 0, :null => false
     t.datetime "rd_updated"
+    t.integer  "rd_needread",                 :default => 0, :null => false
   end
 
   add_index "cards", ["column_id"], :name => "fk_cards_column_id"

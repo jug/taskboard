@@ -149,6 +149,12 @@
             width: 390px;
         }
 
+        #formActions fieldset#fieldsetTags hr.sep {
+            margin-top: 0.7em;
+            margin-bottom: 3px;
+            size: 1px;
+        }
+
         #formActions fieldset#fieldsetInitBurndown {
             width: 450px;
         }
@@ -877,6 +883,13 @@
     margin-bottom: 4px;
     text-decoration: none;
     color: #000000;
+}
+
+#filterTags li a#ccpmTag {
+    font-weight: bold;
+    color: darkred;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 #filterTags li.current a {

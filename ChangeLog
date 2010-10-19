@@ -1,4 +1,43 @@
 
+2010-10-20  jug  <taskboard@jens-gaspar.de>
+
+    # 00:50
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
+        TASKBOARD.builder.buildBigCard; TASKBOARD.api.updateCards; TASKBOARD.init; TASKBOARD.loadFromJSON;
+        TASKBOARD.tags.showTagSearch, ~.toggleShowTag, ~.ccpm, ~.updateTagsList, ~.updateCardSelection;
+        TASKBOARD.remote.api.updateCardRemainingDaysDays, ~.markCardsRemainingDaysAsRead;
+        TASKBOARD.Format.buildDate, ~.formatDate, ~.formatCCPM),
+      public/stylesheets/taskboard.css,
+      app/controllers/juggernaut_sync_controller.rb (JuggernautSyncController.sync_card_action,
+        ~.sync_update_cards),
+      app/controllers/card_controller.rb (CardController.clear_rd, ~.update_rd_days, ~.mark_read_rd_all),
+      app/models/card.rb (Card.clone),
+      app/views/taskboard/show.html.erb,
+      db/migrate/20101019193100_add_remainingdaysread_to_cards.rb (AddRemainingdaysreadToCards),
+      db/schema.rb (Schema.cards):
+    - CCPM-extensions, extended "Tags"-menu:
+      - show number of CCPM-cards on tags-menu
+      - added action in tags-menu to mark ALL CCPM-cards on taskboard as read,
+        so no taskboard-reload is needed any longer to see if CCPM-days needs update
+        need-update represents the daily need to re-estimations of CCPM-cards
+      - added action on tags-menu to mark all CCPM-cards as read
+      - added CCPM-special-tag to show only CCPM-cards
+      - extended cards-table with field 'rd_needread' to indicate read is needed
+    - changed taskboard handling of CCPM-cards:
+      - big/small-cards: remaining-days can be marked as read for single card by entering 'R'
+        in days-field (days-value is kept, but CCPM-card is marked as read,
+        i.e. need re-estimation = need-update)
+      - big/small-cards: updating remaing-days switches read-flag to false,
+        i.e. card needs "reading" (=has been updated = has been re-estimated)
+      - big-card: enhanced CCPM-info: updated-date shows also 'hh:mm:ss' now,
+        and is updated on mark-read as well as for update remaining-days,
+        mark-read is shown as "needs READING/UPDATE"
+      - CCPM-card-info of remaining days now only shown in red font, if needing update;
+        switch (mark-as-read) is now only done manually by CCPM-manager
+    - taskboard-card/project/taskboard: write updated-date in db on updates
+    - bugfix: juggernaut-sync for update-multiple-cards, handle empty-array
+    - code-cleanup of events bound on tag-stuff: moved into funcs
+
 2010-10-16  jug  <taskboard@jens-gaspar.de>
 
     # 11:08

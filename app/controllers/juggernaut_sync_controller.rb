@@ -128,9 +128,15 @@ class JuggernautSyncController < ApplicationController
 
   def sync_card_action card, action, params = {}
     if card.is_a? Array
-      taskboard_id = card.first.taskboard_id
-      object_id    = card.map{ |c| c.id }.join(",")
-      object_name  = card.map{ |c| "\"#{c.short_name}\"" }.join(",")
+      if card.length == 0
+        taskboard_id = params[:taskboard_id].to_i
+        object_id    = "none"
+        object_name  = "none"
+      else
+        taskboard_id = card.first.taskboard_id
+        object_id    = card.map{ |c| c.id }.join(",")
+        object_name  = card.map{ |c| "\"#{c.short_name}\"" }.join(",")
+      end
     else
       taskboard_id = card.taskboard_id
       object_id    = card.id
@@ -188,6 +194,11 @@ class JuggernautSyncController < ApplicationController
     options = { :message => "Card '#{card.name}' updated", :before => "" }.update params
 
     sync_card_action card, 'updateCard', options
+  end
+
+  def sync_update_cards cards, params = {}
+    options = { :message => "Cards updated", :before => "" }.update params
+    sync_card_action cards, 'updateCards', options
   end
 
   def sync_copy_card card, is_copy, params = {}

@@ -108,6 +108,7 @@ class CardController < JuggernautSyncController
     @card.rd_id = 0
     @card.rd_days = 0
     @card.rd_updated = nil
+    @card.rd_needread = 0
     @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Cleared Remaining Days for '#{@card.name}'"})
@@ -126,25 +127,29 @@ class CardController < JuggernautSyncController
     @card = Card.find(params[:id].to_i)
     before = @card.rd_days
     @card.rd_days = params[:days_left].to_i
+    @card.rd_needread = params[:need_read].to_i
     @card.rd_updated = Time.now
     @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Left updated for '#{@card.name}'"})
   end
 
-  def reset_active_rd_cards
-    interval_days = params[:days].to_i
+  def mark_read_rd_all
+    tb_id = params[:id].to_i
 
-    # find taskboards "in use" since X days
-    taskboards = Card.all( :select => "DISTINCT taskboard_id",
-                           :where  => "updated_at >= NOW() - INTERVAL #{interval_days} DAY" )
-    taskboards.each { |row|
-      tb_id = row.taskboard_id
-      cards = Card.all( :where => "taskboard_id = #{tb_id} AND rd_id > 0 AND rd_days > 0" )
-      cards.each { |card|
-        render :json => sync_update_card(card, { :message => "Reset CCPM for '#{@card.name}'"})
-      }
+    # NOTE: "where" is not working in this ruby-activerecord-version
+    # ccpm_cards = Card.where( "taskboard_id = ? AND rd_id > 0 AND rd_days > 0", params[:id].to_i )
+    ccpm_cards = Card.find_by_sql( "SELECT * FROM cards WHERE taskboard_id = #{tb_id} AND rd_id > 0 AND rd_days > 0 AND rd_needread" )
+    card_ids = []
+    ccpm_cards.each { |card|
+      card.rd_needread = 0
+      card.rd_updated = Time.now
+      card.updated_at = Time.now
+      card.save
     }
+
+    # NOTE: taskboard_id required in case of empty cards-array
+    render :json => sync_update_cards(ccpm_cards, { :taskboard_id => tb_id, :message => "Mark #{ccpm_cards.length} cards as Read" })
   end
 
   private

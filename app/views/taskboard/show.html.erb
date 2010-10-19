@@ -46,8 +46,8 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
             <li><a class="actionAddCards" href="#" title="Add some cards to this taskboard">Add cards</a></li>
             <li><a class="actionAddColumn" href="#" title="Add a column to this taskboard">Add column</a></li>
             <li><a class="actionAddRow" href="#" title="Add a row to this taskboard">Add row</a></li>
-            <% end -%>
             <li><a class="actionShowTagSearch" href="#" title="Filter cards by tags">Tags</a></li>
+            <% end -%>
             <li><a class="actionToggleAll" href="#" title="Zoom cards view">Zoom</a></li>
             <li><a class="actionShowBurndown" href="#" title="Show burndown chart for this taskboard">Burndown</a></li>
             <% if session[:editor] -%>
@@ -73,6 +73,12 @@ along with Taskboard. If not, see <http://www.gnu.org/licenses/>.
             </fieldset>
             <fieldset id="fieldsetTags">
                 <a class='actionHideForm' href='#' title='Hide'><img src='/images/hide_off.png' alt='Hide'/></a>
+                <label>Maintain CCPM-Cards:</label>
+                Taskboard has <span id="maintainCCPMCount"></span> CCPM-cards
+                &gt;&gt;&gt;
+                <a class="actionMarkReadCCPM" href="#" title="Mark all CCPM-cards on this taskboard as read (needing update)">Mark as Read</a>
+
+                <hr class="sep"/>
                 <label>Filter cards by tags:</label>
                 <ul id="filterTags"></ul>
             </fieldset>
