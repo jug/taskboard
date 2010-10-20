@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101019193100) do
+ActiveRecord::Schema.define(:version => 20101020210500) do
 
   create_table "burnedhours", :force => true do |t|
     t.integer "taskboard_id", :null => false
@@ -20,7 +20,7 @@ ActiveRecord::Schema.define(:version => 20101019193100) do
   add_index "burnedhours", ["taskboard_id", "date"], :name => "index_burnedhours_on_taskboard_id_and_date"
 
   create_table "cards", :force => true do |t|
-    t.text     "name",                                       :null => false
+    t.text     "name",                                        :null => false
     t.text     "notes"
     t.integer  "taskboard_id"
     t.integer  "column_id"
@@ -31,10 +31,11 @@ ActiveRecord::Schema.define(:version => 20101019193100) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "row_id"
-    t.integer  "rd_id",                       :default => 0, :null => false
-    t.integer  "rd_days",                     :default => 0, :null => false
+    t.integer  "rd_id",                       :default => 0,  :null => false
+    t.integer  "rd_days",                     :default => 0,  :null => false
     t.datetime "rd_updated"
-    t.integer  "rd_needread",                 :default => 0, :null => false
+    t.integer  "rd_needread",                 :default => 0,  :null => false
+    t.string   "rd_note",      :limit => 128, :default => "", :null => false
   end
 
   add_index "cards", ["column_id"], :name => "fk_cards_column_id"

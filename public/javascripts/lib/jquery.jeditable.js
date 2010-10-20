@@ -70,7 +70,8 @@
 			loadtext   : 'Loading...',
 			placeholder: 'Click to edit',
 			loaddata   : {},
-			submitdata : {}
+			submitdata : {},
+			maxlength  : 'none'
 		};
 
 		if(options) {
@@ -407,6 +408,7 @@
 					var input = $('<input type="text">');
 					if (settings.width  != 'none') { input.width(settings.width);  }
 					if (settings.height != 'none') { input.height(settings.height); }
+					if (settings.maxlength != 'none') { input.attr("maxlength", settings.maxlength); }
 					/* https://bugzilla.mozilla.org/show_bug.cgi?id=236791 */
 					//input[0].setAttribute('autocomplete','off');
 					input.attr('autocomplete','off');

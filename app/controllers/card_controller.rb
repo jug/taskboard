@@ -109,6 +109,7 @@ class CardController < JuggernautSyncController
     @card.rd_days = 0
     @card.rd_updated = nil
     @card.rd_needread = 0
+    @card.rd_note = ""
     @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Cleared Remaining Days for '#{@card.name}'"})
@@ -132,6 +133,16 @@ class CardController < JuggernautSyncController
     @card.updated_at = Time.now
     @card.save
     render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Left updated for '#{@card.name}'"})
+  end
+
+  def update_rd_note
+    @card = Card.find(params[:id].to_i)
+    before = @card.rd_note
+    @card.rd_note = params[:note]
+    # note: rd_updated is not updated for rd_note
+    @card.updated_at = Time.now
+    @card.save
+    render :json => sync_update_card(@card, { :before => before, :after => @card.rd_id, :message => "Remaining Days Note updated for '#{@card.name}'"})
   end
 
   def mark_read_rd_all

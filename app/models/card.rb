@@ -34,7 +34,7 @@ class Card < ActiveRecord::Base
   def clone taskboard_id = taskboard_id, column_id = column_id, row_id = row_id
     Card.new(:name => name, :url => url, :issue_no => issue_no, :notes => notes, :position => position,
       :color => color, :tag_list => tag_list,
-      :rd_id => rd_id, :rd_days => rd_days, :rd_updated => rd_updated, :rd_needread => rd_needread,
+      :rd_id => rd_id, :rd_days => rd_days, :rd_updated => rd_updated, :rd_needread => rd_needread, :rd_note => rd_note,
       :taskboard_id => taskboard_id, :column_id => column_id, :row_id => row_id,
       :updated_at => Time.now)
   end

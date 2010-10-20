@@ -1,6 +1,27 @@
 
 2010-10-20  jug  <taskboard@jens-gaspar.de>
 
+    # 22:21
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildBigCard;
+        TASKBOARD.remote.api.updateCardRemainingDaysNote;
+        TASKBOARD.Format.formatCCPMId, ~.formatCCPMNote),
+      public/javascripts/lib/jquery.jeditable.js ($.fn.editable.settings, $.editable.types.defaults),
+      public/stylesheets/taskboard.css,
+      app/controllers/card_controller.rb (CardController.clear_rd, ~.update_rd_note),
+      app/models/card.rb (Card.clone),
+      db/migrate/20101020210500_add_remainingdaysnote_to_cards.rb (AddRemainingdaysnoteToCards),
+      db/schema.rb (Schema.cards):
+    - extended CCPM-card with CCPM-note to add impediments
+      - big-card: added CCPM-note with editable note-field
+        - use empty string to remove note
+        - updating note does NOT update updated-date
+      - small-card: show CCPM-label in white-font on red-background if card has a note
+      - CCPM-note restricted to maxlen 128
+        - added maxlength-feature in jQuery.jeditable-lib to support this
+      - removing CCPM-ID will also remove CCPM-note
+      - bugfix: adding / remove / re-adding CCPM-card will clear days/note, etc
+      - extended cards-table with field 'rd_note'
+
     # 00:50
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
         TASKBOARD.builder.buildBigCard; TASKBOARD.api.updateCards; TASKBOARD.init; TASKBOARD.loadFromJSON;

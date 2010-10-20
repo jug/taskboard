@@ -225,6 +225,15 @@
    font-style: italic;
 }
 
+#taskboard span.ccpmHasNote {
+   background: darkred;
+   color: white;
+   font-weight: bold;
+   font-size: 1em;
+   padding-left: 3px;
+   padding-right: 3px;
+}
+
         #taskboard #metaLane .row {
             border-color: #FFFFFF;
         }
@@ -781,7 +790,8 @@
     }
 
 .bigCard span.ccpmDays form,
-.bigCard span#edit_ccpm_id form {
+.bigCard span#edit_ccpm_id form,
+.bigCard span#edit_ccpm_note form {
    display: inline;
 }
 .bigCard span.ccpmDays form input {
@@ -790,6 +800,10 @@
 .bigCard span#edit_ccpm_id form input {
    min-width: 4em;
 }
+.bigCard span#edit_ccpm_note form input {
+   min-width: 30em;
+}
+
 
 /* Resizable
 ----------------------------------*/
