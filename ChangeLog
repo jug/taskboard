@@ -1,4 +1,11 @@
 
+2010-10-24  jug  <taskboard@jens-gaspar.de>
+
+    # 14:39
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
+        TASKBOARD.tags.updateCardSelection):
+    - bugfix taskboard "Tags"-menu: show CCPM-cards only with normal tags on card
+
 2010-10-20  jug  <taskboard@jens-gaspar.de>
 
     # 22:21

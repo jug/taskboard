@@ -474,7 +474,7 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
         cardLi.addClass('tagged_as_' + tag.toClassName());
     });
     if(card.rd_id > 0)
-        cardLi.addClass('tagged_as_CCPM');
+        cardLi.addClass('pseudo_tag_CCPM');
 
     // edit-mode-only
     if(TASKBOARD.editor){
@@ -1877,7 +1877,7 @@ TASKBOARD.tags = {
             if($(this).attr('href') === '#notags'){
                 cardSelector = ":not([class*='tagged_as_'])";
             } else if($(this).attr('href') === '#ccpm'){
-                cardSelector = ":[class='tagged_as_CCPM']";
+                cardSelector = ":[class*='pseudo_tag_CCPM']";
             } else {
                 cardSelector = $(this).attr('href').replace("#", ".");
             }
