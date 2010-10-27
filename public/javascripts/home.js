@@ -50,6 +50,8 @@ TASKBOARD.home = {
 
         $("form").submit(callbacks.submitForm)
            .find(":text").change(callbacks.changeInput);
+
+        $("#projects > dt:not(.closed)").addClass("closed").next("dd").hide().find(".toggleable").addClass("closed");
     },
     callbacks: {
         renameProject: function(value){
