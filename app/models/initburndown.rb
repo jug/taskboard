@@ -10,6 +10,10 @@ class Initburndown < ActiveRecord::Base
          :velocity => velocity )
   end
 
+  def clone_essential_only taskboard_id = taskboard_id
+    Initburndown.new( :taskboard_id => taskboard_id, :dates => '', :duetime => duetime, :velocity => velocity )
+  end
+
   def duetime_as_str
     "%02d:%02d" % [ (duetime / 3600).to_i, ( duetime / 60 ).to_i % 60 ]
   end

@@ -49,7 +49,12 @@ class TaskboardController < JuggernautSyncController
       redirect_to :action => 'index'
     else
       taskboard = Taskboard.find(params[:id].to_i)
-      clonned = taskboard.clone
+      if not params[:with_hours].empty?
+        with_hours = 0
+      else
+        with_hours = params[:with_hours].to_i
+      end
+      clonned = taskboard.clone with_hours
       clonned.name = 'Copy of ' + taskboard.name
       clonned.save!
       redirect_to :controller => 'project', :action => 'index'

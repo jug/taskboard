@@ -30,7 +30,7 @@ class Taskboard < ActiveRecord::Base
 
   DEFAULT_NAME = "Brand new taskboard"
 
-  def clone
+  def clone with_hours = 0
     clonned_taskboard = Taskboard.new(:name => name, :project => project)
 
     columns_map = {}
@@ -53,9 +53,21 @@ class Taskboard < ActiveRecord::Base
     cards.sort{|c1, c2| c1.position <=> c2.position}.each { |card|
       clonned_card = card.clone clonned_taskboard.id, columns_map[card.column_id].id, rows_map[card.row_id].id
       clonned_card.save!
+
+      # copy hours if requested
+      h_left = card.hours_left
+      if with_hours and h_left > 0
+        clonned_card.update_hours h_left
+      end
     }
 
-    # don't copy initburndown + burnedhours
+    # copy initburndown if existing
+    if not initburndown.nil?
+      cloned_initburndown = initburndown.clone_essential_only clonned_taskboard.id
+      cloned_initburndown.save!
+    end
+
+    # don't copy burnedhours
 
     clonned_taskboard
   end
