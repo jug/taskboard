@@ -330,6 +330,34 @@ class TaskboardController < JuggernautSyncController
     render :json => sync_copy_card(card, is_copy)
   end
 
+  def copy_other_card
+    src_card = Card.find(params[:id].to_i)
+    target_taskboard_id = params[:tb_id].to_i
+    target_row_id = params[:row_id].to_i
+
+    old_hours_left = src_card.hours_left
+    card = src_card.clone
+    target_column = Taskboard.find(target_taskboard_id).columns.first
+
+    # copy card to other taskboard
+    card.taskboard_id = target_taskboard_id
+    card.row_id = target_row_id
+    card.column_id = target_column.id
+
+    card.save!
+    card.insert_at(1)
+    if old_hours_left > 0
+      card.update_hours old_hours_left
+
+      if target_column.coltype == 1
+        taskboard = Taskboard.find(card.taskboard_id)
+        taskboard.update_burnedhours old_hours_left
+      end
+    end
+
+    render :json => sync_copy_card(card, 1)
+  end
+
   def reorder_cards
     card = Card.find(params[:id].to_i)
     before = "#{card.position} @ #{card.column.name}"

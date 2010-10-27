@@ -565,7 +565,7 @@ TASKBOARD.builder.buildBigCard = function(card){
         cardDl +=  $.tag("dt", "URL");
         cardDl +=  $.tag("dd", $.tag("a", card.url, { href : card.url, rel : 'external' }));
     }
-    cardDl += $.tag("dt", "Name");
+    cardDl += $.tag("dt", "Name", { title: "Card ID: " + card.id });
     cardDl += $.tag("dd", card.name.escapeHTML(), { id : "name", className : "editable" });
 
     cardDl += $.tag("dt", TASKBOARD.Format.formatCCPMId(card.rd_id, true, true, false), { id: "ccpmLabel", className: "ccpmInfo" });
@@ -1731,10 +1731,13 @@ TASKBOARD.openRowActions = function(row, top, left){
     var dialog = $('<div id="' + elemId + '">'
         + '<ul>'
         + '<li><form id="rowActionsMoveRowForm" action="#">'
-            + 'Move row to position: <input id="pos" type="text" name="pos" size="2"> <input type="submit" value="Move">'
+            + 'Move row to position: <input id="pos" type="text" name="pos" tabindex="1" size="2"> <input type="submit" value="Move">'
         + '</form></li>'
         + '<li><form id="rowActionsCopyRowForm" action="#">'
-            + 'Copy cards from row ID: <input id="id" type="text" name="id" size="5"> <input type="submit" value="Copy">'
+            + 'Copy cards from row ID: <input id="row_id" type="text" name="row_id" tabindex="2" size="5"> <input type="submit" value="Copy Row">'
+        + '</form></li>'
+        + '<li><form id="rowActionsCopyCardForm" action="#">'
+            + 'Copy card from card ID: <input id="card_id" type="text" name="card_id" tabindex="3" size="5"> <input type="submit" value="Copy Card">'
         + '</form></li>'
         + '</ul></div>');
 
@@ -1753,13 +1756,25 @@ TASKBOARD.openRowActions = function(row, top, left){
     });
 
     dialog.find("#rowActionsCopyRowForm").bind("submit", function(){
-        var srcRowId = $('#rowActionsCopyRowForm #id').val().trim();
+        var srcRowId = $('#rowActionsCopyRowForm #row_id').val().trim();
         if(srcRowId.length == 0 || !srcRowId.match(/^[0-9]+$/)){
-            $('#rowActionsCopyRowForm #id').effect("highlight", { color: "darkred" }).focus();
+            $('#rowActionsCopyRowForm #row_id').effect("highlight", { color: "darkred" }).focus();
             return false;
         }
 
         TASKBOARD.remote.api.copyRow(srcRowId, row.id);
+        $('#' + elemId).fadeOut("fast", function(){ $(this).remove() });
+        return false;
+    });
+
+    dialog.find("#rowActionsCopyCardForm").bind("submit", function(){
+        var srcCardId = $('#rowActionsCopyCardForm #card_id').val().trim();
+        if(srcCardId.length == 0 || !srcCardId.match(/^[0-9]+$/)){
+            $('#rowActionsCopyCardForm #card_id').effect("highlight", { color: "darkred" }).focus();
+            return false;
+        }
+
+        TASKBOARD.remote.api.copyOtherCard(srcCardId, row.taskboard_id, row.id);
         $('#' + elemId).fadeOut("fast", function(){ $(this).remove() });
         return false;
     });
@@ -2027,7 +2042,12 @@ TASKBOARD.remote = {
         },
         copyCard : function(cardId, copyCard){
             TASKBOARD.remote.callback('/taskboard/copy_card',
-                            { id: cardId, copy: (copyCard ? 1 : 0) },
+                            { id: cardId, copy: (copyCard ? 1 : 0), tb_id: 0, row_id: 0 },
+                            'copyCard');
+        },
+        copyOtherCard : function(cardId, target_taskboard, target_row_id){
+            TASKBOARD.remote.callback('/taskboard/copy_other_card',
+                            { id: cardId, tb_id: target_taskboard, row_id: target_row_id },
                             'copyCard');
         },
         moveColumn : function(columnId, position){
