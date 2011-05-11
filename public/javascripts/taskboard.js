@@ -433,7 +433,7 @@ TASKBOARD.builder.buildCardFromJSON = function(card){
     }
 
     var cardNotes = (card.notes) ? $.tag("img", '', { src : '/images/notes.png', title : 'Card has notes', className : 'CardHasNotes' }) : "";
-    cardLi += $.tag("span", cardNotes + card.name.escapeHTML(), { className : 'title' });
+    cardLi += $.tag("span", cardNotes + TASKBOARD.formatHTML( card.name.escapeHTML(), true), { className : 'title' });
 
     if(card.rd_id > 0)
         cardLi += $.tag("span", TASKBOARD.Format.formatCCPM(card, false), { id: "ccpm_" + card.id, className : 'ccpm' });
@@ -566,14 +566,15 @@ TASKBOARD.builder.buildBigCard = function(card){
         cardDl +=  $.tag("dd", $.tag("a", card.url, { href : card.url, rel : 'external' }));
     }
     cardDl += $.tag("dt", "Name", { title: "Card ID: " + card.id });
-    cardDl += $.tag("dd", card.name.escapeHTML(), { id : "name", className : "editable" });
+    cardDl += $.tag("dd", TASKBOARD.formatHTML( card.name.escapeHTML(), true ), { id : "name", className : "editable" });
 
     cardDl += $.tag("dt", TASKBOARD.Format.formatCCPMId(card.rd_id, true, true, false), { id: "ccpmLabel", className: "ccpmInfo" });
     cardDl += $.tag("dd", TASKBOARD.Format.formatCCPM(card, true), { id: "ccpmInfo", className: "ccpmInfo" });
     cardDl += $.tag("dt", "CCPM Note", { className: "ccpmInfo" });
     cardDl += $.tag("dd", TASKBOARD.Format.formatCCPMNote(card), { id: "ccpmNote", className: "ccpmNote ccpmInfo" });
 
-    var notes = card.notes ? (new Showdown.converter()).makeHtml(card.notes.escapeHTML()) : "";
+    // note: was applied on "card.notes.escapeHTML()" before, but that 'destroyed' <auto-link>
+    var notes = card.notes ? (new Showdown.converter()).makeHtml( TASKBOARD.formatHTML(card.notes, false) ) : "";
     cardDl += $.tag("dt", "Notes");
     cardDl += $.tag("dd", notes, { id : "notes", className : "editable" });
 
@@ -687,7 +688,8 @@ TASKBOARD.builder.buildBigCard = function(card){
             .editable(function(value){
                     TASKBOARD.remote.api.updateCardNotes(card.id, value);
                     card.notes = value;
-                    return value ? (new Showdown.converter()).makeHtml(value.escapeHTML()) : "";
+                        // note: was applied on "value.escapeHTML()" before, but that 'destroyed' <auto-link>
+                    return value ? (new Showdown.converter()).makeHtml( TASKBOARD.formatHTML(value, false) ) : "";
                 }, { height: '200px', width: '100%',
                      type : 'textarea', submit : 'Save', cancel : 'Cancel', onblur : 'ignore',
                      data : function(){ return $(this).closest('dl').data('data').notes || ""; },
@@ -2301,6 +2303,14 @@ TASKBOARD.dumpProps = function( obj, parent ) {
     }
 
     alert(msg);
+};
+
+TASKBOARD.formatHTML = function( text, direct ) {
+     if( direct ) {
+          return text.replace(/(<|&lt;)bug:(\d+)(>|&gt;)/gi, "<a href=\"https://bugzilla.tool.1and1.com/show_bug.cgi?id=$2\">Bug #$2</a>");
+     } else {
+          return text.replace(/<bug:(\d+)>/gi, "[Bug #$1](https://bugzilla.tool.1and1.com/show_bug.cgi?id=$1)");
+     }
 };
 
 TASKBOARD.formatVelocity = function( velocity ){ // velocity = %-value * 100

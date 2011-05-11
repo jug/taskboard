@@ -1,4 +1,13 @@
 
+2011-05-11  jug  <taskboard@jens-gaspar.de>
+
+    # 18:53
+    * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
+        TASKBOARD.builder.buildBigCard; TASKBOARD.formatHTML):
+    - added special markup for taskboard small-/big-cards title & notes to support bug- and auto-links
+      - added special markup for "<bug:12345>" to link to Bugzilla-issue
+      - removed escapeHTML() to allow markup for auto-links <http:...>
+
 2010-10-27  jug  <taskboard@jens-gaspar.de>
 
     # 18:15
