@@ -2307,9 +2307,13 @@ TASKBOARD.dumpProps = function( obj, parent ) {
 
 TASKBOARD.formatHTML = function( text, direct ) {
      if( direct ) {
-          return text.replace(/(<|&lt;)bug:(\d+)(>|&gt;)/gi, "<a href=\"https://bugzilla.tool.1and1.com/show_bug.cgi?id=$2\">Bug #$2</a>");
+          var newtext = text.replace(/(<|&lt;)bug:(\d+)(>|&gt;)/gi, "<a href=\"https://bugzilla.tool.1and1.com/show_bug.cgi?id=$2\">Bug #$2</a>");
+          newtext = newtext.replace(/(<|&lt;)jira:([^>]+)(>|&gt;)/gi, "<a href=\"http://issue.tool.1and1.com/browse/$2\">Jira $2</a>");
+          return newtext;
      } else {
-          return text.replace(/<bug:(\d+)>/gi, "[Bug #$1](https://bugzilla.tool.1and1.com/show_bug.cgi?id=$1)");
+          var newtext = text.replace(/<bug:(\d+)>/gi, "[Bug #$1](https://bugzilla.tool.1and1.com/show_bug.cgi?id=$1)");
+          newtext = newtext.replace(/<jira:([^>]+)>/gi, "[Jira $1](http://issue.tool.1and1.com/browse/$1)");
+          return newtext;
      }
 };
 

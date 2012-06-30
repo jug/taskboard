@@ -1,4 +1,10 @@
 
+2012-06-30  jug  <taskboard@jens-gaspar.de>
+
+    # 19:19
+    * public/javascripts/taskboard.js (TASKBOARD.formatHTML):
+    - taskboard-card: added markup <jira:id> linking to Jira in cards title & notes
+
 2011-05-11  jug  <taskboard@jens-gaspar.de>
 
     # 18:53
