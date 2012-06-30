@@ -1,0 +1,41 @@
+# TODOs
+
+# ---------- Bugs / Code-Improvements -----------------------------------------
+
+* bug: don't load taskboard twice on refresh
+* bug: fix text-change "hours left" -> "hours", because the number represent now the 'hours spent' and not 'hours left'
+* bug: replace <bug>-links & <jira>-links with general configurable markup for ticket-systems (more than one link)
+* bug: delete-card doesn't delete taggings-assignment, card-hours(good)
+
+* cleanup: check patches 'TODO: take it out of here!' in 'public/javascripts/lib/jquery.jeditable.js'
+
+# ---------- Features ---------------------------------------------------------
+
+* feature: search for cards -> taskboard
+
+* feature: no backup if cards accidentally deleted -> history, db-backup, confirmation, more logging to restore !?
+
+* feature: upgrade Taskboard to jQuery 1.4.3 (much faster), or even 1.5 (even more faster)
+
+# ---------- Documentation ----------------------------------------------------
+
+* doc: for starting server
+ruby script/server
+juggernaut -c config/juggernaut.yml
+
+* doc: for migrating-db on changes
+cp  ~/backup/taskboard/database.yml.admin config/database.yml
+rake db:migrate
+cp  config/database.yml.tb config/database.yml
+
+* doc: use-case to manual: delete taskboard and all dependencies
+# replace #TB with taskboard_id to delete
+delete H from hours AS H inner join cards as C ON C.id=H.card_id where C.taskboard_id=#TB ;
+delete T from taggings AS T inner join cards as C on C.id=T.taggable_id where C.taskboard_id=#TB ;
+delete from columns where taskboard_id=#TB ;
+delete from rows where taskboard_id=#TB ;
+delete from cards where taskboard_id=#TB ;
+delete from burnedhours where taskboard_id=#TB limit 1 ;
+delete from initburndowns where taskboard_id=#TB limit 1;
+delete from taskboards where id=#TB limit 1 ;
+
