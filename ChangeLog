@@ -6,13 +6,11 @@
 
 2012-06-30  jug  <taskboard@jens-gaspar.de>
 
-    # 19:19
     * public/javascripts/taskboard.js (TASKBOARD.formatHTML):
     - taskboard-card: added markup <jira:id> linking to Jira in cards title & notes
 
 2011-05-11  jug  <taskboard@jens-gaspar.de>
 
-    # 18:53
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
         TASKBOARD.builder.buildBigCard; TASKBOARD.formatHTML):
     - added special markup for taskboard small-/big-cards title & notes to support bug- and auto-links
@@ -21,18 +19,15 @@
 
 2010-10-27  jug  <taskboard@jens-gaspar.de>
 
-    # 18:15
     * public/javascripts/home.js (TASKBOARD.home):
     - collapse all taskboards on projects-page per default
 
-    # 18:14
     * app/controllers/taskboard_controller.rb (TaskboardController.clone_taskboard),
       app/models/initburndown.rb (Initburndown.clone_essential_only),
       app/models/taskboard.rb (Taskboard.clone),
       app/views/taskboard/_taskboard.html.erb (actions):
     - projects-page: added clone of taskboard WITH hours and initburndown-essentials (duetime, velocity)
 
-    # 09:52
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildBigCard; TASKBOARD.openRowActions;
         TASKBOARD.remote.api.copyCard; ~.copyOtherCard),
       app/controllers/taskboard_controller.rb (TaskboardController.copy_other_card):
@@ -42,14 +37,12 @@
 
 2010-10-24  jug  <taskboard@jens-gaspar.de>
 
-    # 14:39
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
         TASKBOARD.tags.updateCardSelection):
     - bugfix taskboard "Tags"-menu: show CCPM-cards only with normal tags on card
 
 2010-10-20  jug  <taskboard@jens-gaspar.de>
 
-    # 22:21
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildBigCard;
         TASKBOARD.remote.api.updateCardRemainingDaysNote;
         TASKBOARD.Format.formatCCPMId, ~.formatCCPMNote),
@@ -70,7 +63,6 @@
       - bugfix: adding / remove / re-adding CCPM-card will clear days/note, etc
       - extended cards-table with field 'rd_note'
 
-    # 00:50
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON;
         TASKBOARD.builder.buildBigCard; TASKBOARD.api.updateCards; TASKBOARD.init; TASKBOARD.loadFromJSON;
         TASKBOARD.tags.showTagSearch, ~.toggleShowTag, ~.ccpm, ~.updateTagsList, ~.updateCardSelection;
@@ -109,7 +101,6 @@
 
 2010-10-16  jug  <taskboard@jens-gaspar.de>
 
-    # 11:08
     * app/controllers/card_controller.rb (CardController.update_name, ~.update_notes, ~.add_tag,
         ~.remove_tag, ~.clear_rd, ~.update_rd_id, ~.update_rd_days, ~.reset_active_rd_cards),
       app/controllers/taskboard_controller.rb (TaskboardController.rename_taskboard, ~.add_card),
@@ -121,7 +112,6 @@
 
 2010-10-13  jug  <taskboard@jens-gaspar.de>
 
-    # 00:12
     * public/javascripts/taskboard.js (TASKBOARD.openCard),
       public/javascripts/utils.js ($.fn.closeTooltip):
     - fix bugs for taskboard big-cards
@@ -132,7 +122,6 @@
 
 2010-10-11  jug  <taskboard@jens-gaspar.de>
 
-    # 02:00
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildCardFromJSON; TASKBOARD.builder.buildBigCard;
         TASKBOARD.api.changeCardColor; TASKBOARD.showBurndown; TASKBOARD.openCard; TASKBOARD.openColorPicker;
         $.fn.openOverlay; TASKBOARD.Format.formatCCPMId, ~.formatCCPM),
@@ -168,7 +157,6 @@
 
 2010-10-10  jug  <taskboard@jens-gaspar.de>
 
-    # 14:55
     * public/javascripts/taskboard.js (TASKBOARD.builder.actions; TASKBOARD.builder.buildRowMeta;
         TASKBOARD.bindHandlerFoldRow; TASKBOARD.builder.buildColumnFromJSON):
     - fix bugs for folding taskboard-rows
@@ -178,7 +166,6 @@
         fold-row-status without any card
     - cleanup: removed unused 'cardNotes'-builder-action
 
-    # 13:49
     * public/javascripts/taskboard.js (TASKBOARD.builder.actions.addCCPMInfoAction;
         TASKBOARD.builder.buildCardFromJSON; TASKBOARD.builder.buildBigCard;
         TASKBOARD.remote.api.updateCardRemainingDaysId, ~.updateCardRemainingDaysDay,
@@ -207,14 +194,12 @@
 
 2010-09-30  jug  <taskboard@jens-gaspar.de>
 
-    # 23:20
     * public/javascripts/taskboard.js (TASKBOARD.openColorPicker):
     - taskboard-card: added colors brown/blue/magenta in card-color-picker
       - example usage: technical debt (brown), impediments (blue), magenta (evaluation-bug/task)
 
 2010-07-02  jug  <taskboard@jens-gaspar.de>
 
-    # 09:40
     * public/javascripts/taskboard.js (TASKBOARD.builder.actions.cardNotes, ~.foldRow;
         TASKBOARD.builder.buildColumnFromJSON; TASKBOARD.builder.buildRowMeta;
         TASKBOARD.builder.buildRowMeta; TASKBOARD.bindHandlerFoldRow; TASKBOARD.builder.buildCardFromJSON;
@@ -241,13 +226,11 @@
 
 2010-06-11  jug  <taskboard@jens-gaspar.de>
 
-    # 18:51
     * app/controllers/taskboard_controller.rb (TaskboardController.find_in_array):
     - bugfix: find date in list of dates taking day-overlap into account
 
 2010-05-11  jug  <taskboard@jens-gaspar.de>
 
-    # -1d/21:57 + 13:03
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown;
         TASKBOARD.form.updateInitBurndown; TASKBOARD.burndown.render;
         TASKBOARD.remote.api.updateInitBurndown; TASKBOARD.formatVelocity),
@@ -263,7 +246,6 @@
 
 2010-05-10  jug  <taskboard@jens-gaspar.de>
 
-    # 21:20
     * public/javascripts/taskboard.js  TASKBOARD.builder.buildBigCard; TASKBOARD.burndown.options;
         TASKBOARD.burndown.render),
       app/controllers/taskboard_controller.rb (TaskboardController.load_burndown2,
@@ -273,13 +255,11 @@
       - correct team & PO commitment from capacity, adjust velocity
     - taskboard: removed card-specific burndown-diagram by commenting out
 
-    # 18:08
     * public/javascripts/taskboard.js (TASKBOARD.burndown.render),
       public/javascripts/lib/jquery.flot.js:
     - added axis-values for taskboard-burndown diagram, using gradient white-greyish background
     - updated plotting library jquery-flot 0.5 to 0.6
 
-    # 02:05
     * public/javascripts/taskboard.js (TASKBOARD.burndown.options; TASKBOARD.burndown.render;
         TASKBOARD.showBurndown; TASKBOARD.remote.api.taskboardBurndown2),
       app/controllers/taskboard_controller.rb (TaskboardController, ~.load_burndown2,
@@ -292,7 +272,6 @@
 
 2010-05-09  jug  <taskboard@jens-gaspar.de>
 
-    # 14:40
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown; TASKBOARD.form.updateInitBurndown,
         ~.updateFixBurndown; TASKBOARD.api.updateFixBurndown; TASKBOARD.remote.api.updateInitBurndown).
       app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown, ~.get_fixburndown,
@@ -310,7 +289,6 @@
 
 2010-05-08  jug  <taskboard@jens-gaspar.de>
 
-    # 23:16
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.fixBurndown;
         TASKBOARD.form.updateFixBurndown; TASKBOARD.api.updateFixBurndown; TASKBOARD.init;
         TASKBOARD.fixBurndown; TASKBOARD.remote.get.taskboardFixBurndown;
@@ -327,7 +305,6 @@
       - taskboard-burndown: allow init- & fix-burndown only for editors
       - taskboard: added action-dialog to add/substract hours for dates in burndown
 
-    # 17:59
     * app/controllers/taskboard_controller.rb (TaskboardController.clean_column, ~.clean_row,
         ~.copy_row, ~.copy_card, ~.reorder_cards, ~.remove_card),
       app/controllers/card_controller.rb (CardController.update_hours),
@@ -338,21 +315,18 @@
       - on removing cards
       - on copying cards
 
-    # 15:54
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown; TASKBOARD.remote.updateInitBurndown),
       app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown),
       app/views/taskboard/show.html.erb (inputBurndownDates):
     - taskboard-burndown: check, parse, complete and re-format burndown-dates
     - taskboard-burndown: widen input-field for burndown-dates
 
-    # 14:37
     * public/javascripts/taskboard.js (TASKBOARD.form.actions.initBurndown;
         TASKBOARD.api.updateInitBurndown; TASKBOARD.remote.api.updateInitBurndown),
       app/controllers/juggernaut_sync_controller.rb (JuggernautSyncController.sync_update_initburndown),
       app/controllers/taskboard_controller.rb (TaskboardController.update_initburndown):
     - taskboard-burndown: updates taskboard after updating setup of init-burndown
 
-    # 12:50
     * public/javascripts/taskboard.js (TASKBOARD.builder.buildColumnFromJSON;
         TASKBOARD.form.actions.initBurndown; TASKBOARD.form.updateInitBurndown; TASKBOARD.init;
         TASKBOARD.initBurndown; TASKBOARD.remote.get.taskboardInitBurndown;
@@ -381,7 +355,6 @@
 
 2010-05-05  jug  <taskboard@jens-gaspar.de>
 
-    # 09:32
     * db/migrate/20100505005200_add_type_to_columns.rb (AddTypeToColumns),
       db/migrate/20100505005201_create_burndowns.rb (CreateBurndowns),
       db/migrate/20100505005202_create_burnedhours.rb (CreateBurnedhours),
