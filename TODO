@@ -2,12 +2,16 @@
 
 # ---------- Bugs / Code-Improvements -----------------------------------------
 
+* remove all CCPM-stuff, as that is no longer required
+
 * bug: don't load taskboard twice on refresh
 * bug: fix text-change "hours left" -> "hours", because the number represent now the 'hours spent' and not 'hours left'
 * bug: replace <bug>-links & <jira>-links with general configurable markup for ticket-systems (more than one link)
 * bug: delete-card doesn't delete taggings-assignment, card-hours(good)
 
 * cleanup: check patches 'TODO: take it out of here!' in 'public/javascripts/lib/jquery.jeditable.js'
+
+* cleanup(?): replace juggernaut with node.js approach !? ... because taskboard seem not to work any more with modern browsers
 
 # ---------- Features ---------------------------------------------------------
 
