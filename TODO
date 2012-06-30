@@ -19,23 +19,3 @@
 
 # ---------- Documentation ----------------------------------------------------
 
-* doc: for starting server
-ruby script/server
-juggernaut -c config/juggernaut.yml
-
-* doc: for migrating-db on changes
-cp  ~/backup/taskboard/database.yml.admin config/database.yml
-rake db:migrate
-cp  config/database.yml.tb config/database.yml
-
-* doc: use-case to manual: delete taskboard and all dependencies
-# replace #TB with taskboard_id to delete
-delete H from hours AS H inner join cards as C ON C.id=H.card_id where C.taskboard_id=#TB ;
-delete T from taggings AS T inner join cards as C on C.id=T.taggable_id where C.taskboard_id=#TB ;
-delete from columns where taskboard_id=#TB ;
-delete from rows where taskboard_id=#TB ;
-delete from cards where taskboard_id=#TB ;
-delete from burnedhours where taskboard_id=#TB limit 1 ;
-delete from initburndowns where taskboard_id=#TB limit 1;
-delete from taskboards where id=#TB limit 1 ;
-

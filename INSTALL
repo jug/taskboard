@@ -1,0 +1,53 @@
+
+# copy and adjust 'config/*.example.yml' -> 'config/*.yml'
+cp -i config/database.example.yml config/database.yml
+cp -i config/juggernaut.example.yml config/juggernaut.yml
+cp -i config/juggernaut_hosts.example.yml config/juggernaut_hosts.yml
+cp -i config/taskboard.example.yml config/taskboard.yml
+
+# mysql-db:
+create database tb_git ;
+# create admin-user to create/alter tables
+GRANT all privileges  ON tb_git.* TO 'tb_adm'@'%' identified by 'ADMIN-PASSWORD' ;
+# create server-user for taskboard 'tb'
+GRANT select,insert,update,delete  ON tb_git.* TO 'tb'@'%' identifed by 'USER-PASSWORD' ;
+
+# create taskboard-user with editor-rights
+INSERT INTO users VALUES (1,'taskboard','ed76f1fcbc2a0fa228cbff5ef3fff429e71f030a','5414054500.286416129376523',1,NULL,NOW(),NOW());
+# then add new user with http://localhost:3000/login/add_user  with editor-rights
+# then revoke editor-rights for taskboard-user (using it as guest-user)
+UPDATE users set editor=0 where id=1 ;
+
+
+# create / migrate db
+# change to admin-user to create/alter db: get admin-user + restore server-user
+# edit 'config/database.yml' (in user: tb_adm <-> tb)
+
+RAILS_ENV=development  ; see config/database.yml (default 'development')
+
+rake db:create
+rake db:schema:load
+
+rake db:migrate
+
+# list of all possible rake-targets
+rake -T
+
+# start server
+ruby script/server &
+nohup juggernaut -c config/juggernaut.yml &
+
+
+# -----------------------------------------------------------------------------
+# mysql-instructions to manually delete taskboard and all dependencies
+
+# replace #TB with taskboard_id to delete
+delete H from hours AS H inner join cards as C ON C.id=H.card_id where C.taskboard_id=#TB ;
+delete T from taggings AS T inner join cards as C on C.id=T.taggable_id where C.taskboard_id=#TB ;
+delete from columns where taskboard_id=#TB ;
+delete from rows where taskboard_id=#TB ;
+delete from cards where taskboard_id=#TB ;
+delete from burnedhours where taskboard_id=#TB limit 1 ;
+delete from initburndowns where taskboard_id=#TB limit 1;
+delete from taskboards where id=#TB limit 1 ;
+
