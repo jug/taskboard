@@ -2,6 +2,13 @@ Taskboard
 =========
 your on-line tool for task management fun
 
+http://taskboard.cognifide.com
+
+Copyright (c) 2008-2009 Cognifide
+http://www.cognifide.com
+
+---
+
 Heavily modified by Jens-Uwe Gaspar (during 2010-2012) with changes to support Scrum:
 
 * Taskboards:
@@ -35,10 +42,4 @@ Heavily modified by Jens-Uwe Gaspar (during 2010-2012) with changes to support S
   * updated jQuery-libs: jquery.js (1.4.2), overlay (1.2.5)
   * extended & fixed jQuery-libs: jeditable, overlay
   * better logging
-
-
-http://taskboard.cognifide.com
-
-Copyright (c) 2008-2009 Cognifide
-http://www.cognifide.com
 
