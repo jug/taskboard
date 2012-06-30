@@ -1,7 +1,7 @@
 
 2014-11-09  jug  <taskboard@jens-gaspar.de>
 
-    * INSTALL, README, TODO:
+    * INSTALL, README.md, TODO:
     - adjusted README with summary of changes
     - created some rough INSTALL-documentation as original source by Cognifide no longer available
     - added file with bugs, features, docu to do
